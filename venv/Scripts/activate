@@ -38,7 +38,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="C:\Users\jaene\Desktop\Sonitus Project\sonitus_project\venv"
+VIRTUAL_ENV="C:\Users\jaene\Desktop\SonitusProject\sonitus_project\venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
