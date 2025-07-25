@@ -1,0 +1,337 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}New Support{% endblock %}
+
+{% block content %}
+
+<h1 class="h3 mb-3">Add a new support</h1>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Fill in the support ticket details</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+
+                    {% if support_form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ support_form.non_field_errors }}
+                    </div>
+                    {% endif %}
+
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ support_form.client.id_for_label }}" class="form-label">
+                                Client
+                                <a href="#" class="btn btn-sm btn-outline-primary ms-2" data-bs-toggle="modal"
+                                    data-bs-target="#addClientModal">+</a>
+                            </label>
+                            {{ support_form.client }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ support_form.support_channel.id_for_label }}" class="form-label">Support
+                                channel</label>
+                            {{ support_form.support_channel }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ support_form.problem_description.id_for_label }}" class="form-label">Problem
+                            description</label>
+                        {{ support_form.problem_description }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ support_form.solution_description.id_for_label }}" class="form-label">Solution
+                            description</label>
+                        {{ support_form.solution_description }}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3" id="kerberus-field-wrapper">
+                            <label for="{{ support_form.kerberus_id.id_for_label }}" class="form-label">Kerberus ID
+                            </label>
+                            {{ support_form.kerberus_id }}
+                        </div>
+
+                        <div class="col-md-6 mb-3" id="freshdesk-field-wrapper">
+                            <label for="{{ support_form.freshdesk_ticket.id_for_label }}" class="form-label">FreshDesk
+                                Ticket</label>
+                            {{ support_form.freshdesk_ticket }}
+                        </div>
+
+                        <div class="col-md-6 mb-3" id="call-status-wrapper">
+                            <label for="{{ support_form.call_status.id_for_label }}" class="form-label">Call
+                                Status</label>
+                            {{ support_form.call_status }}
+                        </div>
+                    </div>
+
+                    <div id="duration-fields-wrapper">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ support_form.waiting_time.id_for_label }}" class="form-label">Waiting
+                                    time</label>
+                                {{ support_form.waiting_time }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ support_form.duration.id_for_label }}"
+                                    class="form-label">Duration</label>
+                                {{ support_form.duration }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <div class="d-flex justify-content-end">
+                        <a href="{% url 'core:dashboard' %}" class="btn btn-secondary me-2">Cancel</a>
+                        <button type="submit" name="submit_support_form" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block modals %}
+<div class="modal fade" id="addClientModal" tabindex="-1" aria-labelledby="addClientModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addClientModalLabel">Add a new client</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {% if client_form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ client_form.non_field_errors }}
+                    </div>
+                    {% endif %}
+                    <div class="mb-3">
+                        <label for="{{ client_form.name.id_for_label }}" class="form-label">Name</label>
+                        {{ client_form.name }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ client_form.client_type.id_for_label }}" class="form-label">Client type</label>
+                        {{ client_form.client_type }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ client_form.country.id_for_label }}" class="form-label">Country</label>
+                        {{ client_form.country }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ client_form.email.id_for_label }}" class="form-label">Email</label>
+                        {{ client_form.email }}
+                        {% if client_form.email.errors %}
+                        <div class="text-danger small mt-1">{{ client_form.email.errors|first }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ client_form.phone.id_for_label }}" class="form-label">Phone</label>
+
+                        <div class="input-group">
+                            <span class="input-group-text" id="phone-code-prefix">+</span>
+                            {{ client_form.phone }}
+                        </div>
+
+                        {% if client_form.phone.errors %}
+                        <div class="text-danger small mt-1">{{ client_form.phone.errors|first }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" name="submit_client_form" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        // --- LÓGICA DE SELECT2 PARA EL CAMPO CLIENTE ---
+        $('#{{ support_form.client.auto_id }}').select2({
+            placeholder: "Search by client name...",
+            minimumInputLength: 1, // Empezar a buscar después de 1 carácter
+            ajax: {
+                url: "{% url 'core:client_search' %}", // La URL de búsqueda que creamos
+                dataType: 'json',
+                delay: 250, // Esperar 250ms después de teclear para buscar
+                processResults: function (data) {
+                    return {
+                        results: data.results
+                    };
+                },
+                cache: true
+            },
+            templateResult: formatClientResult, // Define cómo se ven los resultados en la lista
+            templateSelection: formatClientSelection // Define cómo se ve el resultado una vez seleccionado
+        });
+
+        function formatClientResult(client) {
+            if (!client.id) {
+                return client.text;
+            }
+
+            // Creamos un bloque de HTML para cada resultado
+            var $container = $(
+                '<div class="select2-result-repository clearfix">' +
+                '<div class="select2-result-repository__title"></div>' +
+                '<div class="select2-result-repository__description"></div>' +
+                '</div>'
+            );
+
+            // Llenamos el HTML con los datos del cliente
+            $container.find(".select2-result-repository__title").text(client.text); // El 'text' es el nombre
+            $container.find(".select2-result-repository__description").text(client.client_type + ' | ' + client.email + ' | ' + client.phone + ' | ' + client.country);
+
+            return $container;
+        }
+
+        function formatClientSelection(client) {
+            // Una vez seleccionado, solo mostramos el nombre
+            return client.text;
+        }
+
+        // --- LÓGICA PARA EL PREFIJO TELEFÓNICO ---
+        // const countryCodes = JSON.parse('{{ country_codes_json|safe }}');
+        // const countrySelect = document.getElementById('{{ client_form.country.auto_id }}');
+        // const phonePrefix = document.getElementById('phone-code-prefix');
+
+        // function updatePhonePrefix() {
+        //     const selectedCountryId = countrySelect.value;
+        //     const codes = countryCodes[selectedCountryId] || '';
+        //     const firstCode = codes ? codes.split(',')[0].trim() : '+';
+        //     phonePrefix.textContent = firstCode;
+        // }
+
+        // const countryCodes = JSON.parse('{{ country_codes_json|safe }}');
+
+        // const countrySelect = document.querySelector('#addClientModal select[name="country"]');
+        // const phonePrefixSpan = document.querySelector('#addClientModal #phone-code-prefix');
+
+        // if (countrySelect && phonePrefixSpan) {
+        //     function updatePhonePrefix() {
+        //         const selectedId = countrySelect.value;
+        //         const rawCode = countryCodes[selectedId] || '+';
+        //         const firstCode = rawCode.split(',')[0].trim(); // tomar solo el primero
+        //         phonePrefixSpan.textContent = firstCode || '+';
+        //     }
+
+        //     // Inicializar al cargar el modal
+        //     updatePhonePrefix();
+        //     countrySelect.addEventListener('change', updatePhonePrefix);
+        // }
+
+        // --- LÓGICA PARA EL PREFIJO TELEFÓNICO EN MODAL ---
+        const countryCodes = JSON.parse('{{ country_codes_json|safe }}');
+        const countrySelect = document.querySelector('#addClientModal select[name="country"]');
+        const phonePrefixSpan = document.querySelector('#addClientModal #phone-code-prefix');
+        const phoneInput = document.querySelector('#addClientModal input[name="phone"]');
+        const clientForm = document.querySelector('#addClientModal form');
+
+        if (countrySelect && phonePrefixSpan && phoneInput && clientForm) {
+            function updatePhonePrefix() {
+                const selectedId = countrySelect.value;
+                const rawCode = countryCodes[selectedId] || '+';
+                const firstCode = rawCode.split(',')[0].trim();
+                phonePrefixSpan.textContent = firstCode || '+';
+            }
+
+            // Actualiza al cargar y al cambiar el país
+            updatePhonePrefix();
+            countrySelect.addEventListener('change', updatePhonePrefix);
+
+            // Añadir código al número antes de enviar
+            clientForm.addEventListener('submit', function () {
+                let prefix = phonePrefixSpan.textContent.trim();
+                let phone = phoneInput.value.trim();
+
+                // Eliminar 0 inicial si existe
+                if (phone.startsWith('0')) {
+                    phone = phone.slice(1);
+                }
+
+                // Añadir el prefijo si no lo tiene
+                if (!phone.startsWith(prefix)) {
+                    phoneInput.value = prefix + phone;
+                }
+            });
+        }
+        // --- LÓGICA QUE YA TENÍAMOS ---
+
+        // Activa el selector de tiempo
+        flatpickr(".duration-picker", {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i:S",
+            enableSeconds: true,
+            time_24hr: true,
+            defaultDate: "00:00:00"
+        });
+
+        // 1. Obtenemos los datos que la vista nos envió
+        const channelCallData = JSON.parse('{{ channel_call_data_json|safe }}');
+
+        // 2. Obtenemos los elementos del DOM
+        const supportChannelSelect = document.getElementById('{{ support_form.support_channel.auto_id }}');
+        const kerberusField = document.getElementById('kerberus-field-wrapper');
+        const freshdeskField = document.getElementById('freshdesk-field-wrapper');
+        const callStatusField = document.getElementById('call-status-wrapper');
+        const durationFields = document.getElementById('duration-fields-wrapper');
+
+        function toggleAllConditionalFields() {
+            const selectedChannelId = supportChannelSelect.value;
+            const selectedChannelText = supportChannelSelect.options[supportChannelSelect.selectedIndex].text;
+
+            // Verificamos si el canal seleccionado es una llamada
+            const isCall = channelCallData[selectedChannelId] || false;
+
+            // Lógica para campos de duración y estado de llamada
+            if (isCall) {
+                durationFields.classList.remove('d-none');
+                callStatusField.classList.remove('d-none');
+            } else {
+                durationFields.classList.add('d-none');
+                callStatusField.classList.add('d-none');
+            }
+
+            // Lógica para Kerberus/FreshDesk (la que ya teníamos)
+            if (selectedChannelText.includes('FreshDesk')) {
+                freshdeskField.classList.remove('d-none');
+                kerberusField.classList.add('d-none');
+            } else if (selectedChannelText.includes('Kerberus')) {
+                freshdeskField.classList.add('d-none');
+                kerberusField.classList.remove('d-none');
+            } else {
+                freshdeskField.classList.add('d-none');
+                kerberusField.classList.add('d-none');
+            }
+        }
+
+        // Ejecutamos la función al cargar y al cambiar
+        toggleAllConditionalFields();
+        supportChannelSelect.addEventListener('change', toggleAllConditionalFields);
+
+        {% if client_form_invalid %}
+        setTimeout(function () {
+            const clientModal = new bootstrap.Modal(document.getElementById('addClientModal'));
+            clientModal.show();
+        }, 50);
+        {% endif %}
+
+    });
+
+</script>
+{% endblock %}

@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}New Support{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-3">Add a new support</h1>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Fill in the support ticket details</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ support_form.client.id_for_label }}" class="form-label">
+                                Client
+                                <a href="#" class="btn btn-sm btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#addClientModal">+</a>
+                            </label>
+                            {{ support_form.client }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ support_form.support_channel.id_for_label }}" class="form-label">Support channel</label>
+                            {{ support_form.support_channel }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ support_form.problem_description.id_for_label }}" class="form-label">Problem description</label>
+                        {{ support_form.problem_description }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ support_form.solution_description.id_for_label }}" class="form-label">Solution description</label>
+                        {{ support_form.solution_description }}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3" id="kerberus-field-wrapper">
+                            <label for="{{ support_form.kerberus_id.id_for_label }}" class="form-label">Kerberus ID (Optional)</label>
+                            {{ support_form.kerberus_id }}
+                        </div>
+                        <div class="col-md-6 mb-3" id="freshdesk-field-wrapper">
+                            <label for="{{ support_form.freshdesk_ticket.id_for_label }}" class="form-label">FreshDesk Ticket (Optional)</label>
+                            {{ support_form.freshdesk_ticket }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ support_form.waiting_time.id_for_label }}" class="form-label">Waiting time</label>
+                            {{ support_form.waiting_time }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ support_form.duration.id_for_label }}" class="form-label">Duration</label>
+                            {{ support_form.duration }}
+                        </div>
+                    </div>
+                    <hr>
+                    <button type="submit" name="submit_support_form" class="btn btn-primary">Save</button>
+                    <a href="{% url 'core:dashboard' %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<div class="modal fade" id="addClientModal" tabindex="-1" aria-labelledby="addClientModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addClientModalLabel">Añadir Nuevo Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="{{ client_form.name.id_for_label }}" class="form-label">Nombre</label>
+                        {{ client_form.name }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ client_form.client_type.id_for_label }}" class="form-label">Tipo de Cliente</label>
+                        {{ client_form.client_type }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ client_form.country.id_for_label }}" class="form-label">País</label>
+                        {{ client_form.country }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ client_form.email.id_for_label }}" class="form-label">Email</label>
+                        {{ client_form.email }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ client_form.phone.id_for_label }}" class="form-label">Teléfono</label>
+                        {{ client_form.phone }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" name="submit_client_form" class="btn btn-primary">Guardar Cliente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+
+{% block scripts %}
+<script>
+
+document.addEventListener("DOMContentLoaded", function() {
+    // Activa el selector de tiempo
+    flatpickr(".duration-picker", {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "H:i:S",
+        time_24hr: true,
+        defaultDate: "00:00:00"
+    });
+
+    // Lógica para campos condicionales
+    const supportChannelSelect = document.getElementById('{{ support_form.support_channel.auto_id }}');
+    const kerberusField = document.getElementById('kerberus-field-wrapper');
+    const freshdeskField = document.getElementById('freshdesk-field-wrapper');
+
+    if (supportChannelSelect && kerberusField && freshdeskField) {
+        function toggleConditionalFields() {
+            const selectedChannelText = supportChannelSelect.options[supportChannelSelect.selectedIndex].text;
+            if (selectedChannelText.includes('FreshDesk')) {
+                freshdeskField.classList.remove('d-none');
+                kerberusField.classList.add('d-none');
+            } else if (selectedChannelText.includes('Kerberus')) {
+                freshdeskField.classList.add('d-none');
+                kerberusField.classList.remove('d-none');
+            } else {
+                freshdeskField.classList.add('d-none');
+                kerberusField.classList.add('d-none');
+            }
+        }
+        toggleConditionalFields();
+        supportChannelSelect.addEventListener('change', toggleConditionalFields);
+    }
+});
+</script>
+{% endblock %}
