@@ -50,9 +50,9 @@
                 <div class="row mb-3">
                     <div class="col-sm-4">
                         <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title mb-2">Total Supports</h5>
-                                <h2 class="mb-0" id="total-supports">0</h2>
+                            <div class="card-body bg-primary  rounded shadow-sm">
+                                <h5 class="card-title text-white mb-2">Total Supports</h5>
+                                <h2 class="mb-0 text-white" id="total-supports">0</h2>
                             </div>
                         </div>
                     </div>
@@ -90,7 +90,7 @@
     const f = (d) => d.toISOString().slice(0, 10);
 
     function initCalendar(period = "daily") {
-        if (fp) fp.destroy(); // NO borres innerHTML
+        if (fp) fp.destroy();
 
         const baseConfig = {
             inline: true,
@@ -106,7 +106,7 @@
             fp = flatpickr("#single-calendar", {
                 ...baseConfig,
                 mode: "single",
-                plugins: [new weekSelect()],   // <--- aquí el cambio
+                plugins: [new weekSelect()],
                 onChange: function (selectedDates) {
                     if (!selectedDates.length) return;
                     const clicked = selectedDates[0];
@@ -114,7 +114,7 @@
                     const day = start.getDay(); // 0=dom, 1=lun...
                     const diffToMonday = (day === 0 ? -6 : 1 - day);
                     start.setDate(start.getDate() + diffToMonday);
-                    selectedDate = f(start); // lunes - el backend calcula el rango
+                    selectedDate = f(start);
                 }
             });
         } else if (period === "monthly") {

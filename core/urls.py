@@ -12,7 +12,6 @@ urlpatterns = [
     path('dashboard/', views.dashboard_view, name='dashboard'),
     path('forms/', views.support_form_view, name='forms'),
     path('reports/', views.reports_view, name='reports'),
-    path('test/', views.test_page_view, name='test_page'),
     path("reports/", views.report_page, name="report_page"),
     
     # Vistas de la API JS
@@ -23,3 +22,5 @@ urlpatterns = [
     path("download-report-pdf", views.download_report_pdf, name="download_report_pdf"),
     
 ]
+
+handler403 = 'core.views.permission_denied_view'

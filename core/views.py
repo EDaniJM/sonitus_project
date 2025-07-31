@@ -5,7 +5,8 @@ from django.db.models import Count, Sum
 from django.db.models.functions import TruncYear, TruncMonth, TruncDay, TruncHour
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth.decorators import login_required, permission_required  # Para proteger vistas
+# Para proteger vistas
+from django.contrib.auth.decorators import login_required, permission_required
 from django.utils import timezone
 from django.template.loader import render_to_string
 from django.http import HttpResponse
@@ -19,6 +20,17 @@ import calendar
 from .utils.ranges import get_period_range, build_filename
 from .utils.pdf import render_to_pdf
 
+import json
+import requests
+import base64
+from urllib.parse import urlencode
+
+# Error 403
+def permission_denied_view(request, exception):
+    """
+    Vista personalizada para manejar los errores 403 (Forbidden).
+    """
+    return render(request, '403.html', status=403)
 
 # Autenticación
 
@@ -62,7 +74,7 @@ def dashboard_view(request):
     ).order_by('-count')
     channel_stats_list = list(channel_stats_queryset)
 
-    # --- NUEVA LÓGICA PARA EL GRÁFICO DE LÍNEAS ---
+    # --- LÓGICA PARA EL GRÁFICO DE LÍNEAS ---
     # 1. Obtenemos los datos de la BD: contamos las llamadas por mes y por estado
     call_stats = Support.objects \
         .filter(call_status__name__in=['RECEIVED', 'MISSED', 'RETURNED']) \
@@ -73,7 +85,7 @@ def dashboard_view(request):
 
     # 2. Procesamos los datos para que Chart.js los entienda
     line_chart_labels = [calendar.month_abbr[i]
-                         for i in range(1, 13)]  # ["Jan", "Feb", ...]
+                        for i in range(1, 13)]  # ["Jan", "Feb", ...]
     received_calls_data = [0] * 12  # [0, 0, 0, ...]
     missed_calls_data = [0] * 12   # [0, 0, 0, ...]
     returned_calls_data = [0] * 12
@@ -93,7 +105,6 @@ def dashboard_view(request):
     remaining_credit = balance.remaining_minutes if balance else 0
     consumed_minutes = total_credit_minutes - remaining_credit
 
-
     country_stats = Support.objects.values(
         'client__country__name'  # Agrupamos por el nombre del país del cliente
     ).annotate(
@@ -101,7 +112,6 @@ def dashboard_view(request):
     ).order_by('-count')
 
     country_stats_list = list(country_stats)
-
 
     # --- Contexto Final ---
     context = {
@@ -120,6 +130,7 @@ def dashboard_view(request):
         'country_stats': country_stats_list,
     }
     return render(request, 'dashboard.html', context)
+
 
 # El formulario solo debe ser accesible para quienes pueden "añadir" soportes.
 # Esto bloqueará el acceso a los Supervisores.
@@ -195,8 +206,10 @@ def report_page(request):
 def test_page_view(request):
     return render(request, 'test_page.html')
 
-# APIS
 
+
+
+# -------------------APIS
 
 @login_required
 def client_search_view(request):
@@ -218,7 +231,6 @@ def client_search_view(request):
         if client.company:
             display_text += f" - {client.company.name}"
 
-        # --- Creamos el diccionario con el nuevo 'text' ---
         results.append({
             'id': client.id,
             'text': display_text,
@@ -264,7 +276,6 @@ def call_stats_chart_view(request):
                 minute_bucket = "00" if local_time.minute < 30 else "30"
                 hour_bucket = f"{local_time.hour:02d}:{minute_bucket}"
                 if hour_bucket in data_map:
-                    # CORREGIDO: Es 'call.call_status.name', no 'call.created_at.call_status.name'
                     data_map[hour_bucket][call.call_status.name] += 1
 
         # Preparamos los datos y los devolvemos directamente desde aquí
@@ -291,7 +302,7 @@ def call_stats_chart_view(request):
         last_day = target_date.replace(day=num_days)
         base_query = base_query.filter(created_at__range=[first_day, last_day])
         labels = [(first_day + timedelta(days=i)).strftime(date_format)
-                    for i in range(num_days)]
+                for i in range(num_days)]
 
     call_stats = base_query \
         .annotate(period_start=trunc_func) \
@@ -314,6 +325,7 @@ def call_stats_chart_view(request):
         'labels': labels, 'received': received_data,
         'missed': missed_data, 'returned': returned_data,
     })
+
 
 # La recarga de crédito solo debe ser accesible para quienes tengan el permiso personalizado.
 # Esto bloqueará a Agents y Supervisores
@@ -345,8 +357,8 @@ def report_summary_api(request):
         total = qs.count()
         channels = list(
             qs.values("support_channel__name")
-                .annotate(total=Count("id"))
-                .order_by("-total")
+            .annotate(total=Count("id"))
+            .order_by("-total")
         )
 
     return JsonResponse({
@@ -358,32 +370,116 @@ def report_summary_api(request):
     })
 
 
+
 @login_required
+@permission_required('core.view_support', raise_exception=True)
 def download_report_pdf(request):
     period = request.GET.get("period", "daily")
-    date = request.GET.get("date")
+    date_str = request.GET.get("date")
 
-    if not date:
-        # fallback por si alguien llama directo
-        date = timezone.now().strftime("%Y-%m-%d")
+    if not date_str:
+        date_str = timezone.now().strftime("%Y-%m-%d")
 
-    start_dt, end_dt = get_period_range(period, date)
+    start_dt, end_dt = get_period_range(period, date_str)
 
-    # Traemos TODOS los soportes del rango, ordenados cronológicamente
+    # Queryset base para todos los cálculos
     qs = (Support.objects
-            .filter(created_at__gte=start_dt, created_at__lt=end_dt)
-            .select_related('client__company', 'support_channel')
-            .order_by('created_at'))
+        .filter(created_at__gte=start_dt, created_at__lt=end_dt)
+        .select_related('client__company', 'support_channel', 'client__country')
+        .order_by('created_at'))
 
-    total = qs.count()
+    for s in qs:
+        if s.duration:
+            total_seconds = int(s.duration.total_seconds())
+            hours = total_seconds // 3600
+            minutes = (total_seconds % 3600) // 60
+            seconds = total_seconds % 60
+            s.duration_str = f"{hours:02}:{minutes:02}:{seconds:02}"
+        else:
+            s.duration_str = "—"
+    # --- LÓGICA PARA GENERAR GRÁFICOS ---
+
+    # 1. Cálculo de datos para los gráficos
+    channel_stats = list(qs.values('support_channel__name').annotate(count=Count('id')).order_by('-count'))
+    channel_labels = [item['support_channel__name'] for item in channel_stats]
+    channel_data = [item['count'] for item in channel_stats]
+    
+    country_stats = list(qs.values('client__country__name').annotate(count=Count('id')).order_by('-count'))
+    country_labels = [item['client__country__name'] for item in country_stats if item['client__country__name']]
+    country_data = [item['count'] for item in country_stats if item['client__country__name']]
+
+    # 2. Configuración de los gráficos de Chart.js
+    doughnut_chart_config = {
+        'type': 'doughnut',
+        'data': {
+            'labels': channel_labels,
+            'datasets': [{'data': channel_data, 'backgroundColor': ['#4e73df', '#f6c23e', '#e74a3b', '#1cc88a', '#36b9cc', '#6f42c1','#e0e0e0','#ff9f40']}]
+        },
+        'options': { 'plugins': { 'legend': { 'position': 'right' } } }
+    }
+
+    bar_chart_config = {
+        'type': 'horizontalBar',
+        'data': {
+            'labels': country_labels,
+            'datasets': [{'label': 'Total Supports', 'data': country_data, 'backgroundColor': '#4e73df'}]
+        },
+        'options': {
+            'legend': { 'display': False },
+            'scales': { 'xAxes': [{ 'ticks': { 'beginAtZero': True, 'stepSize': 1 } }] }
+        }
+    }
+
+    # 3. Generación de las URLs de las imágenes desde QuickChart.io
+    base_url = "https://quickchart.io/chart"
+    doughnut_chart_url = f"{base_url}?{urlencode({'c': json.dumps(doughnut_chart_config), 'format': 'png', 'width': 600, 'height': 400})}"
+    bar_chart_url = f"{base_url}?{urlencode({'c': json.dumps(bar_chart_config), 'format': 'png', 'width': 600, 'height': 400})}"
+
+    # --- DESCARGAR Y CODIFICAR LAS IMÁGENES ---
+    try:
+        doughnut_response = requests.get(doughnut_chart_url)
+        doughnut_response.raise_for_status() # Lanza un error si la petición falla
+        doughnut_chart_base64 = base64.b64encode(doughnut_response.content).decode('utf-8')
+    except requests.exceptions.RequestException:
+        doughnut_chart_base64 = None # Fallback si no se puede conectar
+
+    try:
+        bar_response = requests.get(bar_chart_url)
+        bar_response.raise_for_status()
+        bar_chart_base64 = base64.b64encode(bar_response.content).decode('utf-8')
+    except requests.exceptions.RequestException:
+        bar_chart_base64 = None
+
+    # --- FIN: LÓGICA PARA GENERAR GRÁFICOS ---
 
     filename = build_filename(period, start_dt, end_dt)
+
+    if doughnut_chart_base64:
+        print("Doughnut base64 OK:", doughnut_chart_base64[:100])
+    else:
+        print("❌ Doughnut chart failed to generate.")
+    if bar_chart_base64:
+        print("Bar base64 OK:", bar_chart_base64[:100])
+    else:
+        print("❌ Bar chart failed to generate.")
+
+    print("Chart URL:", doughnut_chart_url)
+    try:
+        doughnut_response = requests.get(doughnut_chart_url)
+        doughnut_response.raise_for_status()
+        doughnut_chart_base64 = base64.b64encode(doughnut_response.content).decode('utf-8')
+    except requests.exceptions.RequestException as e:
+        print("❌ Doughnut chart request error:", e)
+        doughnut_chart_base64 = None
 
     context = {
         "period": period,
         "start": start_dt,
         "end": end_dt,
         "supports": qs,
-        "total": total,
+        "total": qs.count(),
+        "doughnut_chart_base64": doughnut_chart_base64, # Pasamos la imagen codificada
+        "bar_chart_base64": bar_chart_base64,          # Pasamos la imagen codificada
+        "channel_stats": channel_stats,
     }
     return render_to_pdf("report_pdf.html", context, filename)

@@ -275,13 +275,6 @@
 
             return $container;
         }
-
-        // function formatClientSelection(client) {
-        //     Una vez seleccionado, solo mostramos el nombre
-        //     console.log("Datos del cliente seleccionado:", client);
-        //     return client.text;
-        // }
-
         const countryCodes = JSON.parse('{{ country_codes_json|safe }}');
         const countrySelect = document.querySelector('#addClientModal select[name="country"]');
         const phonePrefixSpan = document.querySelector('#addClientModal #phone-code-prefix');
@@ -316,8 +309,6 @@
                 }
             });
         }
-        // --- LÓGICA QUE YA TENÍAMOS ---
-
         // Activa el selector de tiempo
         flatpickr(".duration-picker", {
             enableTime: true,

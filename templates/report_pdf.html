@@ -1,6 +1,7 @@
 {% load static %}
 <!doctype html>
 <html>
+
 <head>
     <meta charset="utf-8">
     <style>
@@ -8,11 +9,13 @@
             size: a4 portrait;
             margin: 2cm;
         }
+
         body {
             font-family: Helvetica, Arial, sans-serif;
-            font-size: 10px; /* Un tamaño de fuente base más pequeño */
+            font-size: 10px;
             color: #333;
         }
+
         h1 {
             color: #274a87;
             text-align: center;
@@ -21,6 +24,7 @@
             border-bottom: 2px solid #274a87;
             padding-bottom: 5px;
         }
+
         h3 {
             margin-top: 25px;
             color: #274a87;
@@ -32,22 +36,44 @@
             border: none;
             margin-bottom: 25px;
         }
+
         .logo {
             height: 40px;
         }
+
         .header-info {
             text-align: right;
             font-size: 11px;
             color: #666;
         }
 
+        /* Contenedor de gráficos */
+        .chart-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .chart {
+            width: 90%;
+            max-width: 450px;
+            margin: 0 auto 20px auto;
+            display: block;
+        }
+
+        /* Salto de página */
+        .page-break {
+            page-break-after: always;
+        }
+
         /* --- TABLA PRINCIPAL (CAMBIOS CLAVE PARA XHMTL2PDF) --- */
         .report-table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed; /* Mantenemos esto, es crucial */
+            table-layout: fixed;
+            /* Mantenemos esto, es crucial */
             margin-top: 15px;
         }
+
         .report-table th,
         .report-table td {
             border: 1px solid #ccc;
@@ -57,31 +83,52 @@
             /* Propiedad clave para forzar el ajuste de texto en xhtml2pdf */
             word-wrap: break-word;
         }
+
         .report-table thead th {
             background-color: #f2f4f7;
             color: #333;
             font-weight: bold;
-            /* xhtml2pdf no soporta bien 'display: table-header-group',
-               el encabezado podría no repetirse en todas las páginas. */
         }
-        
-        /* --- ANCHOS DE COLUMNA EXPLÍCITOS --- */
-        .col-channel { width: 15%; }
-        .col-ticket { width: 15%; }
-        .col-client { width: 14%; }
-        .col-company { width: 14%; }
-        .col-problem { width: 21%; }
-        .col-solution { width: 21%; }
 
+        .col-channel {
+            width: 14%;
+        }
+
+        .col-ticket {
+            width: 12%;
+        }
+
+        /* reducido */
+        .col-duration {
+            width: 10%;
+        }
+
+        /* nueva columna */
+        .col-client {
+            width: 12%;
+        }
+
+        .col-company {
+            width: 12%;
+        }
+
+        .col-problem {
+            width: 20%;
+        }
+
+        .col-solution {
+            width: 20%;
+        }
     </style>
 </head>
+
 <body>
     <table id="header_content">
         <tr>
             <td><img class="logo" src="{% static 'img/logo_color.jpg' %}" alt="Logo"></td>
         </tr>
         <tr>
-            
+
             <td class="header-info">
                 {% if period != "daily" %}
                 <div>
@@ -98,12 +145,63 @@
 
     <h1>Support Report</h1>
 
+    {% if doughnut_chart_base64 or bar_chart_base64 %}
+    <h3>Summary by Channel</h3>
+    <!-- Tabla contenedora principal -->
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+
+        <!-- Fila 1: Donut + tabla canales -->
+        <tr>
+            <!-- Doughnut Chart -->
+
+            <td style="width: 60%; text-align: center; vertical-align: top;">
+                <img src="data:image/png;base64,{{ doughnut_chart_base64 }}" style="width: 95%; height: auto;">
+            </td>
+
+            <!-- Tabla de resumen de canales -->
+            <td style="width: 40%; vertical-align: top;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                    <thead>
+                        <tr style="background-color: #f2f4f7; color: #333; font-weight: bold;">
+                            <th style="border: 1px solid #ccc; padding: 6px; text-align: center;">Channel</th>
+                            <th style="border: 1px solid #ccc; padding: 6px; text-align: center;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for channel in channel_stats %}
+                        <tr>
+                            <td style="border: 1px solid #ccc; padding: 6px;">{{ channel.support_channel__name }}</td>
+                            <td style="border: 1px solid #ccc; padding: 6px; text-align: center;">{{ channel.count }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+
+        <!-- Fila 2: Bar Chart centrado -->
+        <tr>
+            
+            <td colspan="2" style="padding-top: 20px;">
+                <h3>Summary by Country</h3>
+                <img src="data:image/png;base64,{{ bar_chart_base64 }}"
+                    style="width: 550px; height: 250px; display: block; margin: auto;">
+            </td>
+        </tr>
+    </table>
+    {% endif %}
+
+    <!-- Salto de página -->
+    <div class="page-break"></div>
+
     <h3>Details</h3>
     <table class="report-table">
         <thead>
             <tr>
                 <th class="col-channel">Support Channel</th>
                 <th class="col-ticket">Ticket/Call ID</th>
+                <th class="col-duration">Duration</th>
                 <th class="col-client">Client</th>
                 <th class="col-company">Company</th>
                 <th class="col-problem">Problem</th>
@@ -118,6 +216,7 @@
                     {% if s.kerberus_id %}Kerberus: {{ s.kerberus_id }}<br>{% endif %}
                     {% if s.freshdesk_ticket %}Freshdesk: {{ s.freshdesk_ticket }}{% endif %}
                 </td>
+                <td>{{ s.duration_str }}</td>
                 <td>{{ s.client.name }} {{ s.client.lastname }}</td>
                 <td>{% if s.client.company %}{{ s.client.company.name }}{% endif %}</td>
                 <td>{{ s.problem_description }}</td>
@@ -131,4 +230,5 @@
         </tbody>
     </table>
 </body>
+
 </html>

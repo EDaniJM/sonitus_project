@@ -28,7 +28,7 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = [] # Aca se añadirian los dominios wwww.sonitus.com etc
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost'] # Aca se añadirian los dominios wwww.sonitus.com etc
 
 
 # Application definition
@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Mis aplicaciones
     'core',
 ]
 
