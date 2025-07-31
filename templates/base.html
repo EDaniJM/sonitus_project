@@ -12,7 +12,6 @@
         content="adminkit, bootstrap, bootstrap 5, admin, dashboard, template, responsive, css, sass, html, theme, front-end, ui kit, web">
 
     <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link rel="shortcut icon" href="{% static 'adminkit/img/icons/icon-48x48.png' %}" />
 
     <link rel="canonical" href="https://demo-basic.adminkit.io/pages-blank.html" />
 
@@ -51,16 +50,28 @@
                         </a>
                     </li>
 
+                    {% if perms.core.add_support %}
                     <li class="sidebar-item">
                         <a class="sidebar-link" href="{% url 'core:forms' %}">
-                            <i class="align-middle" data-feather="check-square"></i> <span
-                                class="align-middle">Form</span>
+                            <i class="align-middle" data-feather="check-square"></i>
+                            <span class="align-middle">Form</span>
                         </a>
                     </li>
+                    {% endif %}
+
+                    {% if perms.core.view_support %}
                     <li class="sidebar-item">
                         <a class="sidebar-link" href="{% url 'core:reports' %}">
-                            <i class="align-middle" data-feather="bar-chart-2"></i> <span
-                                class="align-middle">Report</span>
+                            <i class="align-middle" data-feather="bar-chart-2"></i>
+                            <span class="align-middle">Report</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="{% url 'core:logout' %}">
+                            <i class="align-middle" data-feather="log-out"></i>
+                            <span class="align-middle">Log Out</span>
                         </a>
                     </li>
 

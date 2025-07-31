@@ -74,12 +74,15 @@
                 </div>
                 <div class="d-flex justify-content-between align-items-center mt-2">
                     <span class="text-muted small">Consumed: {{ consumed_minutes|floatformat:0 }} min</span>
+                    
+                    {% if perms.core.can_recharge_credit %}
                     <form action="{% url 'core:recharge_credit' %}" method="POST" id="recharge-form" class="d-inline">
                         {% csrf_token %}
                         <button type="button" class="btn btn-primary btn-sm " data-bs-toggle="modal" data-bs-target="#confirmRechargeModal" title="Recargar crédito">
                             Reset
                         </button>
                     </form>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -116,18 +119,6 @@
     </div>
 
 
-    <!-- <div class="col-12 col-lg-6 d-flex">
-        <div class="card flex-fill">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Received vs. Missed Calls (Monthly)</h5>
-            </div>
-            <div class="card-body d-flex justify-content-center align-items-center">
-                <div class="chart">
-                    <canvas id="callsLineChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div> -->
     <div class="col-12 col-lg-6 d-flex">
         <div class="card flex-fill">
             <div class="card-header">
@@ -155,6 +146,22 @@
         </div>
     </div>
 
+</div>
+
+<div class="row">
+    <div class="col-12 d-flex">
+        <div class="card flex-fill">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Top - Supports by Country</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart">
+                    <!-- El nuevo gráfico se dibujará en este canvas -->
+                    <canvas id="countryBarChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 
@@ -187,6 +194,7 @@
 {% block scripts %}
 {{ channel_stats|json_script:"chart-data" }}
 {{ line_chart_data|json_script:"line-chart-data" }}
+{{ country_stats|json_script:"bar-chart-data" }}
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -335,6 +343,48 @@
         // Carga inicial
         dateNavWrapper.style.display = 'inline-block'; // Mostrar flechas al inicio (vista mensual)
         fetchAndUpdateChart();
+
+
+        const barChartDataElement = document.getElementById('bar-chart-data');
+        if (barChartDataElement) {
+            const barChartData = JSON.parse(barChartDataElement.textContent);
+            
+            // Invertimos los datos para que el más alto aparezca arriba
+            const barLabels = barChartData.map(item => item.client__country__name);
+            const barData = barChartData.map(item => item.count)
+
+            new Chart(document.getElementById("countryBarChart"), {
+                // 👇 CAMBIO CLAVE: El tipo de gráfico ahora es 'horizontalBar'
+                type: "horizontalBar", 
+                data: {
+                    labels: barLabels,
+                    datasets: [{
+                        label: "Total Supports",
+                        data: barData,
+                        backgroundColor: window.theme.primary,
+                        borderColor: window.theme.primary
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    // 👇 La configuración de los ejes también cambia para la v2
+                    scales: {
+                        xAxes: [{
+                            ticks: {
+                                beginAtZero: true,
+                                stepSize: 1
+                            }
+                        }]
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
     });
 
 

@@ -23,7 +23,7 @@
                     </div>
                     {% endif %}
 
-                    
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="{{ support_form.client.id_for_label }}" class="form-label">
@@ -34,19 +34,22 @@
                             {{ support_form.client }}
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="{{ support_form.support_channel.id_for_label }}" class="form-label">Support
-                                channel</label>
+                            <label for="{{ support_form.support_channel.id_for_label }}" class="form-label">
+                                Support channel <span class="text-danger">*</span>
+                            </label>
                             {{ support_form.support_channel }}
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label for="{{ support_form.problem_description.id_for_label }}" class="form-label">Problem
-                            description</label>
+                        <label for="{{ support_form.problem_description.id_for_label }}" class="form-label">
+                            Problem description <span class="text-danger">*</span>
+                        </label>
                         {{ support_form.problem_description }}
                     </div>
                     <div class="mb-3">
-                        <label for="{{ support_form.solution_description.id_for_label }}" class="form-label">Solution
-                            description</label>
+                        <label for="{{ support_form.solution_description.id_for_label }}" class="form-label">
+                            Solution description <span class="text-danger">*</span>
+                        </label>
                         {{ support_form.solution_description }}
                     </div>
                     <div class="row">
@@ -69,18 +72,26 @@
                         </div>
                     </div>
 
-                    <div id="duration-fields-wrapper">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ support_form.waiting_time.id_for_label }}" class="form-label">Waiting
-                                    time</label>
-                                {{ support_form.waiting_time }}
+                    <div class="row">
+                        <div class="col-md-6 mb-3" id="waiting-time-wrapper">
+                            <label for="{{ support_form.waiting_time.id_for_label }}" class="form-label">Waiting
+                                time</label>
+                            {{ support_form.waiting_time }}
+                            {% if support_form.waiting_time.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ support_form.waiting_time.errors|striptags }}
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ support_form.duration.id_for_label }}"
-                                    class="form-label">Duration</label>
-                                {{ support_form.duration }}
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6 mb-3" id="duration-wrapper">
+                            <label for="{{ support_form.duration.id_for_label }}" class="form-label">Duration</label>
+                            {{ support_form.duration }}
+                            {% if support_form.duration.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ support_form.duration.errors|striptags }}
                             </div>
+                            {% endif %}
                         </div>
                     </div>
 
@@ -105,52 +116,88 @@
                 <h5 class="modal-title" id="addClientModalLabel">Add a new client</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="POST">
-                {% csrf_token %}
-                <div class="modal-body">
-                    {% if client_form.non_field_errors %}
-                    <div class="alert alert-danger">
-                        {{ client_form.non_field_errors }}
-                    </div>
-                    {% endif %}
-                    <div class="mb-3">
-                        <label for="{{ client_form.name.id_for_label }}" class="form-label">Name</label>
-                        {{ client_form.name }}
-                    </div>
-                    <div class="mb-3">
-                        <label for="{{ client_form.client_type.id_for_label }}" class="form-label">Client type</label>
-                        {{ client_form.client_type }}
-                    </div>
-                    <div class="mb-3">
-                        <label for="{{ client_form.country.id_for_label }}" class="form-label">Country</label>
-                        {{ client_form.country }}
-                    </div>
-                    <div class="mb-3">
-                        <label for="{{ client_form.email.id_for_label }}" class="form-label">Email</label>
-                        {{ client_form.email }}
-                        {% if client_form.email.errors %}
-                        <div class="text-danger small mt-1">{{ client_form.email.errors|first }}</div>
+
+            <div id="client-form-content">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        {% if client_form.non_field_errors %}
+                        <div class="alert alert-danger">{{ client_form.non_field_errors }}</div>
                         {% endif %}
-                    </div>
 
-                    <div class="mb-3">
-                        <label for="{{ client_form.phone.id_for_label }}" class="form-label">Phone</label>
-
-                        <div class="input-group">
-                            <span class="input-group-text" id="phone-code-prefix">+</span>
-                            {{ client_form.phone }}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ client_form.name.id_for_label }}" class="form-label">Name</label>
+                                {{ client_form.name }}
+                                {% if client_form.name.errors %}<div class="text-danger small mt-1">{{
+                                    client_form.name.errors|first }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ client_form.lastname.id_for_label }}" class="form-label">Last
+                                    Name</label>
+                                {{ client_form.lastname }}
+                                {% if client_form.lastname.errors %}<div class="text-danger small mt-1">{{
+                                    client_form.lastname.errors|first }}</div>{% endif %}
+                            </div>
                         </div>
 
-                        {% if client_form.phone.errors %}
-                        <div class="text-danger small mt-1">{{ client_form.phone.errors|first }}</div>
-                        {% endif %}
+                        <div class="mb-3">
+                            <label for="{{ client_form.company.id_for_label }}" class="form-label">
+                                Company <a href="#" class="btn btn-sm btn-outline-primary ms-2"
+                                    id="open-company-modal-btn">+</a>
+                            </label>
+                            {{ client_form.company }}
+                            {% if client_form.company.errors %}<div class="text-danger small mt-1">{{
+                                client_form.company.errors|first }}</div>{% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ client_form.client_type.id_for_label }}" class="form-label">Client
+                                type</label>
+                            {{ client_form.client_type }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ client_form.country.id_for_label }}" class="form-label">Country</label>
+                            {{ client_form.country }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ client_form.email.id_for_label }}" class="form-label">Email</label>
+                            {{ client_form.email }}
+                            {% if client_form.email.errors %}<div class="text-danger small mt-1">{{
+                                client_form.email.errors|first }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ client_form.phone.id_for_label }}" class="form-label">Phone</label>
+                            <div class="input-group">
+                                <span class="input-group-text" id="phone-code-prefix">+</span>
+                                {{ client_form.phone }}
+                            </div>
+                            {% if client_form.phone.errors %}<div class="text-danger small mt-1">{{
+                                client_form.phone.errors|first }}</div>{% endif %}
+                        </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" name="submit_client_form" class="btn btn-primary">Save</button>
-                </div>
-            </form>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" name="submit_client_form" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="company-form-content" class="d-none">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <label for="{{ company_form.name.id_for_label }}" class="form-label">Company Name</label>
+                        {{ company_form.name }}
+                        {% if company_form.errors %}<div class="text-danger small mt-1">{{ company_form.errors|first }}
+                        </div>{% endif %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="back-to-client-btn">← Back</button>
+                        <button type="submit" name="submit_company_form" class="btn btn-primary">Save Company</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -163,11 +210,11 @@
         // --- LÓGICA DE SELECT2 PARA EL CAMPO CLIENTE ---
         $('#{{ support_form.client.auto_id }}').select2({
             placeholder: "Search by client name...",
-            minimumInputLength: 1, // Empezar a buscar después de 1 carácter
+            minimumInputLength: 1,
             ajax: {
-                url: "{% url 'core:client_search' %}", // La URL de búsqueda que creamos
+                url: "{% url 'core:client_search' %}",
                 dataType: 'json',
-                delay: 250, // Esperar 250ms después de teclear para buscar
+                delay: 250,
                 processResults: function (data) {
                     return {
                         results: data.results
@@ -175,8 +222,35 @@
                 },
                 cache: true
             },
-            templateResult: formatClientResult, // Define cómo se ven los resultados en la lista
-            templateSelection: formatClientSelection // Define cómo se ve el resultado una vez seleccionado
+            templateResult: formatClientResult,
+            templateSelection: function (client) {
+                return client.full_label || client.text || client.id;
+            },
+            escapeMarkup: function (m) { return m; }
+        });
+
+        $('#company-form-content form').on('submit', function (e) {
+            e.preventDefault(); // Evitamos que la página se recargue
+
+            $.ajax({
+                type: 'POST',
+                url: $(this).attr('action'), // La URL del formulario
+                data: $(this).serialize() + '&submit_company_form=1', // Añadimos el nombre del botón
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                success: function (response) {
+                    // 1. Creamos una nueva opción para el selector de empresa
+                    var newOption = new Option(response.name, response.id, true, true);
+                    // 2. La añadimos al selector y lo actualizamos
+                    $('#{{ client_form.company.auto_id }}').append(newOption).trigger('change');
+
+                    // 3. Volvemos a la vista del cliente
+                    showClientView();
+                },
+                error: function (response) {
+                    // Manejo de errores (puedes hacerlo más robusto si quieres)
+                    alert('Error al guardar la empresa.');
+                }
+            });
         });
 
         function formatClientResult(client) {
@@ -193,48 +267,21 @@
             );
 
             // Llenamos el HTML con los datos del cliente
-            $container.find(".select2-result-repository__title").text(client.text); // El 'text' es el nombre
-            $container.find(".select2-result-repository__description").text(client.client_type + ' | ' + client.email + ' | ' + client.phone + ' | ' + client.country);
+            $container.find(".select2-result-repository__title").text(client.full_label || client.text);
+            $container.find(".select2-result-repository__description").text(
+                (client.client_type || 'N/A') + ' | ' + (client.email || 'N/A') + ' | ' +
+                (client.phone || 'N/A') + ' | ' + (client.country || 'N/A')
+            );
 
             return $container;
         }
 
-        function formatClientSelection(client) {
-            // Una vez seleccionado, solo mostramos el nombre
-            return client.text;
-        }
-
-        // --- LÓGICA PARA EL PREFIJO TELEFÓNICO ---
-        // const countryCodes = JSON.parse('{{ country_codes_json|safe }}');
-        // const countrySelect = document.getElementById('{{ client_form.country.auto_id }}');
-        // const phonePrefix = document.getElementById('phone-code-prefix');
-
-        // function updatePhonePrefix() {
-        //     const selectedCountryId = countrySelect.value;
-        //     const codes = countryCodes[selectedCountryId] || '';
-        //     const firstCode = codes ? codes.split(',')[0].trim() : '+';
-        //     phonePrefix.textContent = firstCode;
+        // function formatClientSelection(client) {
+        //     Una vez seleccionado, solo mostramos el nombre
+        //     console.log("Datos del cliente seleccionado:", client);
+        //     return client.text;
         // }
 
-        // const countryCodes = JSON.parse('{{ country_codes_json|safe }}');
-
-        // const countrySelect = document.querySelector('#addClientModal select[name="country"]');
-        // const phonePrefixSpan = document.querySelector('#addClientModal #phone-code-prefix');
-
-        // if (countrySelect && phonePrefixSpan) {
-        //     function updatePhonePrefix() {
-        //         const selectedId = countrySelect.value;
-        //         const rawCode = countryCodes[selectedId] || '+';
-        //         const firstCode = rawCode.split(',')[0].trim(); // tomar solo el primero
-        //         phonePrefixSpan.textContent = firstCode || '+';
-        //     }
-
-        //     // Inicializar al cargar el modal
-        //     updatePhonePrefix();
-        //     countrySelect.addEventListener('change', updatePhonePrefix);
-        // }
-
-        // --- LÓGICA PARA EL PREFIJO TELEFÓNICO EN MODAL ---
         const countryCodes = JSON.parse('{{ country_codes_json|safe }}');
         const countrySelect = document.querySelector('#addClientModal select[name="country"]');
         const phonePrefixSpan = document.querySelector('#addClientModal #phone-code-prefix');
@@ -289,34 +336,38 @@
         const kerberusField = document.getElementById('kerberus-field-wrapper');
         const freshdeskField = document.getElementById('freshdesk-field-wrapper');
         const callStatusField = document.getElementById('call-status-wrapper');
-        const durationFields = document.getElementById('duration-fields-wrapper');
+        const waitingTimeField = document.getElementById('waiting-time-wrapper');
+        const durationField = document.getElementById('duration-wrapper');
 
         function toggleAllConditionalFields() {
             const selectedChannelId = supportChannelSelect.value;
             const selectedChannelText = supportChannelSelect.options[supportChannelSelect.selectedIndex].text;
-
-            // Verificamos si el canal seleccionado es una llamada
             const isCall = channelCallData[selectedChannelId] || false;
 
-            // Lógica para campos de duración y estado de llamada
-            if (isCall) {
-                durationFields.classList.remove('d-none');
-                callStatusField.classList.remove('d-none');
-            } else {
-                durationFields.classList.add('d-none');
-                callStatusField.classList.add('d-none');
-            }
+            kerberusField.classList.add('d-none');
+            freshdeskField.classList.add('d-none');
+            callStatusField.classList.add('d-none');
+            waitingTimeField.classList.add('d-none');
+            durationField.classList.add('d-none');
 
-            // Lógica para Kerberus/FreshDesk (la que ya teníamos)
-            if (selectedChannelText.includes('FreshDesk')) {
-                freshdeskField.classList.remove('d-none');
-                kerberusField.classList.add('d-none');
-            } else if (selectedChannelText.includes('Kerberus')) {
-                freshdeskField.classList.add('d-none');
-                kerberusField.classList.remove('d-none');
-            } else {
-                freshdeskField.classList.add('d-none');
-                kerberusField.classList.add('d-none');
+            if (selectedChannelText.includes('Training Presential')) {
+                durationField.classList.remove('d-none'); // Solo muestra Duración
+            }
+            else if (isCall) {
+                // Si es una llamada, muestra los campos de llamada
+                callStatusField.classList.remove('d-none');
+                waitingTimeField.classList.remove('d-none');
+                durationField.classList.remove('d-none');
+
+                // Lógica específica para el ID
+                if (selectedChannelText.includes('Kerberus') || selectedChannelText.includes('Call Center')) {
+                    kerberusField.classList.remove('d-none');
+                }
+            }
+            else { // Lógica para otros canales que no son llamada
+                if (selectedChannelText.includes('FreshDesk')) {
+                    freshdeskField.classList.remove('d-none');
+                }
             }
         }
 
@@ -324,14 +375,61 @@
         toggleAllConditionalFields();
         supportChannelSelect.addEventListener('change', toggleAllConditionalFields);
 
+        // --- LÓGICA PARA INTERCAMBIAR VISTAS EN EL MODAL ---
+        const modalTitle = document.getElementById('addClientModalLabel');
+        const clientFormContent = document.getElementById('client-form-content');
+        const companyFormContent = document.getElementById('company-form-content');
+        const openCompanyBtn = document.getElementById('open-company-modal-btn');
+        const backToClientBtn = document.getElementById('back-to-client-btn');
+
+        // Función para mostrar la vista de "Añadir Empresa"
+        function showCompanyView() {
+            modalTitle.textContent = 'Add a new company';
+            clientFormContent.classList.add('d-none');
+            companyFormContent.classList.remove('d-none');
+        }
+
+        // Función para mostrar la vista de "Añadir Cliente"
+        function showClientView() {
+            modalTitle.textContent = 'Add a new client';
+            companyFormContent.classList.add('d-none');
+            clientFormContent.classList.remove('d-none');
+        }
+
+        // Event Listeners para los botones
+        openCompanyBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            showCompanyView();
+        });
+
+        backToClientBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            showClientView();
+        });
+
+
+        // --- LÓGICA PARA REABRIR EL MODAL CON ERRORES ---
         {% if client_form_invalid %}
         setTimeout(function () {
             const clientModal = new bootstrap.Modal(document.getElementById('addClientModal'));
             clientModal.show();
+            showClientView(); // Aseguramos que se vea la vista correcta
         }, 50);
         {% endif %}
 
+        {% if company_form_invalid %}
+        setTimeout(function () {
+            const clientModalInstance = bootstrap.Modal.getInstance(document.getElementById('addClientModal'));
+            if (clientModalInstance) {
+                clientModalInstance.hide();
+            }
+            const companyModal = new bootstrap.Modal(document.getElementById('addCompanyModal'));
+            companyModal.show();
+        }, 100);
+        {% endif %}
     });
+
+
 
 </script>
 {% endblock %}

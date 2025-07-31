@@ -4,5 +4,190 @@
 {% block title %}Download Report{% endblock %}
 
 {% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/weekSelect/weekSelect.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css">
+
 <h1 class="h3 mb-3">Download Report</h1>
+
+<div class="row">
+    <!-- Calendario + período -->
+    <div class="col-12 col-md-6 col-xxl-3 d-flex">
+        <div class="card flex-fill">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Select Period</h5>
+            </div>
+            <div class="card-body d-flex">
+                <div class="align-self-center w-100">
+                    <div class="mb-3">
+                        <label class="form-label">Period</label>
+                        <select id="period" class="form-select">
+                            <option value="daily" selected>Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+
+                    <div class="chart mb-3">
+                        <div id="single-calendar" class="flatpickr-input" readonly></div>
+                    </div>
+
+                    <button id="load-report" class="btn btn-primary w-100">Load</button>
+                    <button id="download-pdf" class="btn btn-outline-secondary w-100 mt-2" disabled>
+                        Download PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen -->
+    <div class="col-12 col-md-6 col-xxl-9 d-flex">
+        <div class="card flex-fill">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Report Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-sm-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title mb-2">Total Supports</h5>
+                                <h2 class="mb-0" id="total-supports">0</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <table class="table table-hover mb-0" id="report-table">
+                    <thead>
+                        <tr>
+                            <th>Channel</th>
+                            <th>Total Supports</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="2">Select a period/date…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/weekSelect/weekSelect.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/index.js"></script>
+
+<script>
+    let fp = null;
+    let selectedDate = null;
+    let lastQuery = null;
+
+    const f = (d) => d.toISOString().slice(0, 10);
+
+    function initCalendar(period = "daily") {
+        if (fp) fp.destroy(); // NO borres innerHTML
+
+        const baseConfig = {
+            inline: true,
+            dateFormat: "Y-m-d",
+            prevArrow: "<span class='fas fa-chevron-left'></span>",
+            nextArrow: "<span class='fas fa-chevron-right'></span>",
+            onChange: function (selectedDates) {
+                selectedDate = selectedDates[0] ? f(selectedDates[0]) : null;
+            }
+        };
+
+        if (period === "weekly") {
+            fp = flatpickr("#single-calendar", {
+                ...baseConfig,
+                mode: "single",
+                plugins: [new weekSelect()],   // <--- aquí el cambio
+                onChange: function (selectedDates) {
+                    if (!selectedDates.length) return;
+                    const clicked = selectedDates[0];
+                    const start = new Date(clicked);
+                    const day = start.getDay(); // 0=dom, 1=lun...
+                    const diffToMonday = (day === 0 ? -6 : 1 - day);
+                    start.setDate(start.getDate() + diffToMonday);
+                    selectedDate = f(start); // lunes - el backend calcula el rango
+                }
+            });
+        } else if (period === "monthly") {
+            fp = flatpickr("#single-calendar", {
+                ...baseConfig,
+                mode: "single",
+                // importante: sobreescribimos formatos para el mes
+                dateFormat: "Y-m",
+                plugins: [monthSelectPlugin({
+                    shorthand: true,
+                    dateFormat: "Y-m",   // lo que mandamos al backend
+                    altFormat: "F Y"     // lo que se ve
+                })],
+                onChange: function (selectedDates) {
+                    // monthSelectPlugin devuelve el 1er día del mes
+                    selectedDate = selectedDates[0] ? f(selectedDates[0]) : null;
+                }
+            });
+        } else {
+            // daily
+            fp = flatpickr("#single-calendar", baseConfig);
+        }
+    }
+
+    // init por defecto
+    initCalendar("daily");
+
+    document.getElementById("period").addEventListener("change", function () {
+        initCalendar(this.value);
+        selectedDate = null;
+        lastQuery = null;
+        document.getElementById("download-pdf").disabled = true;
+        document.getElementById("total-supports").textContent = "0";
+        document.querySelector("#report-table tbody").innerHTML =
+            '<tr><td colspan="2">Select a period/date…</td></tr>';
+    });
+
+    document.getElementById("load-report").addEventListener("click", function () {
+        const period = document.getElementById("period").value;
+        if (!selectedDate) {
+            alert("Select a date");
+            return;
+        }
+        lastQuery = { period, date: selectedDate };
+        loadSummary(period, selectedDate);
+        document.getElementById("download-pdf").disabled = false;
+    });
+
+    function loadSummary(period, date) {
+        fetch(`{% url 'core:report_summary_api' %}?period=${period}&date=${date}`)
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById("total-supports").textContent = data.total;
+                const tbody = document.querySelector("#report-table tbody");
+                tbody.innerHTML = "";
+                if (data.channels.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="2">No data for the selected range.</td></tr>';
+                    return;
+                }
+                data.channels.forEach(ch => {
+                    tbody.innerHTML += `<tr><td>${ch.channel}</td><td>${ch.total}</td></tr>`;
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Error loading report");
+            });
+    }
+
+    document.getElementById("download-pdf").addEventListener("click", function () {
+        if (!lastQuery) return;
+        const { period, date } = lastQuery;
+        window.location.href = `{% url 'core:download_report_pdf' %}?period=${period}&date=${date}`;
+    });
+</script>
 {% endblock %}

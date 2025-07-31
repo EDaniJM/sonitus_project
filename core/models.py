@@ -13,6 +13,7 @@ class Country(models.Model):
     class Meta:
         verbose_name = "Country"
         verbose_name_plural = "Countries"
+        ordering = ['name']
 
 # Modelo para la tabla t_client_type
 class ClientType(models.Model):
@@ -36,10 +37,24 @@ class SupportChannel(models.Model):
     class Meta:
         verbose_name = "Support Channel"
         verbose_name_plural = "Support Channels"
+        ordering = ['name']
+
+class Company(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Company"
+        verbose_name_plural = "Companies"
+        ordering = ['name']
 
 # Modelo para la tabla t_client
 class Client(models.Model):
     name = models.CharField(max_length=60)
+    lastname = models.CharField(max_length=60, blank=True)
+    company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True, blank=True)
     email = models.EmailField(max_length=60, blank=True,unique=True,null=True) # unique=True para evitar emails duplicados
     phone = models.CharField(max_length=30, blank=True, unique=True, null=True) # blank=True hace el campo opcional
 
@@ -70,6 +85,11 @@ class CreditBalance(models.Model):
 
     def __str__(self):
         return f"{self.remaining_minutes} minutos restantes"
+    
+    class Meta:
+        permissions = [
+            ("can_recharge_credit", "Can recharge credit balance"),
+        ]
 
 
 # Modelo para la tabla t_support
@@ -78,11 +98,11 @@ class Support(models.Model):
 
     # Relaciones
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
-    support_channel = models.ForeignKey(SupportChannel, on_delete=models.SET_NULL, null=True, blank=True)
+    support_channel = models.ForeignKey(SupportChannel, on_delete=models.PROTECT)
     
     # Detalles del ticket
     problem_description = models.TextField()
-    solution_description = models.TextField(blank=True, null=True)
+    solution_description = models.TextField()
     created_at = models.DateTimeField(default=timezone.now)
     
     call_status = models.ForeignKey(
@@ -101,7 +121,7 @@ class Support(models.Model):
     duration = models.DurationField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
-        # Primero, guarda el objeto Support como siempre
+        
         super().save(*args, **kwargs)
 
         # Ahora, la lógica del crédito
