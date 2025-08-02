@@ -1,0 +1,81 @@
+services:
+  # Base de datos PostgreSQL
+  db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=sonitus_db
+      - POSTGRES_USER=sonitus_user
+      - POSTGRES_PASSWORD=sonitus_password
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sonitus_user -d sonitus_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Aplicación Django
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=django-insecure-3u!uxl7d#5q-fo9**7a39h2rosa@n2^wfcmlakls98z
+      - DATABASE_NAME=sonitus_db
+      - DATABASE_USER=sonitus_user
+      - DATABASE_PASSWORD=sonitus_password
+      - DATABASE_HOST=db
+      - DATABASE_PORT=5432
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Servicio para ejecutar migraciones
+  migrate:
+    build: .
+    command: python manage.py migrate
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=django-insecure-3u!uxl7d#5q-fo9**7a39h2rosa@n2^wfcmlakls98z
+      - DATABASE_NAME=sonitus_db
+      - DATABASE_USER=sonitus_user
+      - DATABASE_PASSWORD=sonitus_password
+      - DATABASE_HOST=db
+      - DATABASE_PORT=5432
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Servicio para crear superusuario (opcional)
+  createsuperuser:
+    build: .
+    command: python manage.py createsuperuser --noinput --username admin --email admin@example.com
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=django-insecure-3u!uxl7d#5q-fo9**7a39h2rosa@n2^wfcmlakls98z
+      - DATABASE_NAME=sonitus_db
+      - DATABASE_USER=sonitus_user
+      - DATABASE_PASSWORD=sonitus_password
+      - DATABASE_HOST=db
+      - DATABASE_PORT=5432
+      - DJANGO_SUPERUSER_PASSWORD=admin123
+    depends_on:
+      - migrate
+    profiles:
+      - setup
+
+volumes:
+  postgres_data:
+  static_volume: 
