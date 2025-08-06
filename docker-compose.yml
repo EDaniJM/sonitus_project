@@ -1,0 +1,92 @@
+# docker-compose.yml
+
+version: '3.9'
+
+services:
+  # Servicio de la Aplicación Web (Django + Daphne)
+  web:
+    build: .
+    container_name: sonitus_web
+    command: daphne -b 0.0.0.0 -p 8000 config.asgi:application
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    env_file: .env
+    networks:
+      - backend
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  # Servicio del Servidor Web (Nginx)
+  nginx:
+    build: ./nginx
+    container_name: sonitus_nginx
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    ports:
+      - "80:80"
+    networks:
+      - frontend
+      - backend
+    depends_on:
+      - web
+
+  # Servicio de la Base de Datos (PostgreSQL)
+  db:
+    image: postgres:17-alpine
+    container_name: sonitus_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    networks:
+      - backend
+      - adminpg
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Servicio de Redis
+  redis:
+    image: "redis:alpine"
+    container_name: sonitus_redis
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Servicio de pgAdmin
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: sonitus_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - "5050:80"
+    networks:
+      - adminpg
+    depends_on:
+      - db
+
+networks:
+  frontend:
+  backend:
+  adminpg:
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:

@@ -7,7 +7,7 @@
 <h1 class="h3 mb-3">Dashboard</h1>
 
 <div class="row">
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="card">
             <div class="card-body">
                 <div class="row">
@@ -24,24 +24,7 @@
         </div>
     </div>
 
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <div class="row">
-                    <div class="col mt-0">
-                        <h5 class="card-title">Today's Support</h5>
-                    </div>
-                    <div class="col-auto">
-                        <div class="stat text-primary"><i class="align-middle" data-feather="calendar"></i></div>
-                    </div>
-                </div>
-                <br>
-                <h1 class="mt-1 mb-2">{{ tickets_today }}</h1>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="card">
             <div class="card-body">
                 <div class="row">
@@ -58,12 +41,70 @@
         </div>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="card">
             <div class="card-body">
                 <div class="row">
                     <div class="col mt-0">
-                        <h5 class="card-title">Remaining Credit</h5>
+                        <h5 class="card-title">Today's Support</h5>
+                    </div>
+                    <div class="col-auto">
+                        <div class="stat text-primary"><i class="align-middle" data-feather="calendar"></i></div>
+                    </div>
+                </div>
+                <br>
+                <h1 class="mt-1 mb-2">{{ tickets_today }}</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-2">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col mt-0">
+                        <h5 class="card-title">Avg. Wait Time <br>
+                        </h5>
+                    </div>
+                    <div class="col-auto">
+                        <div class="stat text-primary">
+                            <i class="align-middle" data-feather="phone-call"></i>
+                        </div>
+                    </div>
+                </div>
+                <br>
+                <h1 class="mt-1 mb-2 " id="avg-wait-time-value">{{ avg_wait_time }}</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-2">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col mt-0">
+                        <h5 class="card-title">Today's Missed Calls</h5>
+                    </div>
+                    <div class="col-auto">
+                        <div class="stat text-danger">
+                            <i class="align-middle" data-feather="alert-triangle"></i>
+                        </div>
+                    </div>
+                </div>
+                <br>
+                <h1 class="mt-1 mb-2" id="missed-calls-today-value">{{ missed_calls_today }}</h1>
+            </div>
+        </div>
+    </div>
+
+    
+
+    <div class="col-md-2">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col mt-0">
+                        <h5 class="card-title">Remaining Credit Available</h5>
                     </div>
                     <div class="col-auto">
                         <div class="stat text-primary"><i class="align-middle" data-feather="clock"></i></div>
@@ -73,12 +114,13 @@
                     {{ remaining_credit|floatformat:0 }} <span class="fs-6 text-muted">min</span>
                 </div>
                 <div class="d-flex justify-content-between align-items-center mt-2">
-                    <span class="text-muted small">Consumed: {{ consumed_minutes|floatformat:0 }} min</span>
-                    
+                    <span class="text-muted small" id="consumed-minutes-value">Consumed: {{ consumed_minutes|floatformat:0 }} min</span>
+
                     {% if perms.core.can_recharge_credit %}
                     <form action="{% url 'core:recharge_credit' %}" method="POST" id="recharge-form" class="d-inline">
                         {% csrf_token %}
-                        <button type="button" class="btn btn-primary btn-sm " data-bs-toggle="modal" data-bs-target="#confirmRechargeModal" title="Recargar crédito">
+                        <button type="button" class="btn btn-primary btn-sm " data-bs-toggle="modal"
+                            data-bs-target="#confirmRechargeModal" title="Recargar crédito">
                             Reset
                         </button>
                     </form>
@@ -163,195 +205,151 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
 
 {% block modals %}
-    <div class="modal fade" id="confirmRechargeModal" tabindex="-1" aria-labelledby="confirmRechargeModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="confirmRechargeModalLabel">Confirm Recharge</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    Are you sure you want to reset the credit to 3000 minutes?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="confirm-recharge-btn">Accept</button>
-                </div>
+<div class="modal fade" id="confirmRechargeModal" tabindex="-1" aria-labelledby="confirmRechargeModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmRechargeModalLabel">Confirm Recharge</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to reset the credit to 3000 minutes?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirm-recharge-btn">Accept</button>
             </div>
         </div>
     </div>
+</div>
+
+
+
 {% endblock %}
-
-
-{% endblock %}
-
-
-
 
 {% block scripts %}
-{{ channel_stats|json_script:"chart-data" }}
-{{ line_chart_data|json_script:"line-chart-data" }}
-{{ country_stats|json_script:"bar-chart-data" }}
+    <!-- Datos para la carga inicial de los gráficos -->
+    {{ channel_stats|json_script:"doughnut-chart-data" }}
+    {{ country_stats|json_script:"bar-chart-data" }}
 
-<script>
+    <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // --- INICIO: CÓDIGO PARA EL GRÁFICO DE DONA ---
-        const doughnutChartData = JSON.parse(document.getElementById('chart-data').textContent);
-        const doughnutLabels = doughnutChartData.map(item => item.support_channel__name);
-        const doughnutData = doughnutChartData.map(item => item.count);
+        // --- INICIALIZACIÓN DE GRÁFICOS ---
+        // Declaramos las variables de los gráficos aquí para que sean accesibles en todo el script
+        let doughnutChart, lineChart, barChart;
 
-        new Chart(document.getElementById("supportChannelChart"), {
-            type: "doughnut",
-            data: {
-                labels: doughnutLabels,
-                datasets: [{
-                    data: doughnutData,
-                    backgroundColor: ['#4e73df', '#f6c23e', '#e74a3b', '#1cc88a', '#36b9cc', '#6f42c1','#e0e0e0','#ff9f40'],
-                    borderWidth: 2,
-                    borderColor: "#fff"
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false, cutout: "75%",
-                plugins: { legend: { display: false } }
-            }
-        });
-        // --- FIN: CÓDIGO PARA EL GRÁFICO DE DONA ---
-
-        // --- INICIO: CÓDIGO PARA EL GRÁFICO DE LINEAS ---
-        const lineChartCanvas = document.getElementById("callsLineChart");
-
-        // 1. Creamos una instancia del gráfico con datos vacíos
-        const lineChart = new Chart(lineChartCanvas, {
-            type: "line",
-            data: {
-                labels: [], // Se llenarán con los datos de la API
-                datasets: [{
-                    label: "Received",
-                    data: [],
-                    borderColor: window.theme.primary,
-                    backgroundColor: "transparent",
-                    fill: false,
-                    tension: 0.2
-                }, {
-                    label: "Missed",
-                    data: [],
-                    borderColor: window.theme.danger,
-                    backgroundColor: "transparent",
-                    fill: false,
-                    borderDash: [5, 5],
-                    tension: 0.2
-                }, {
-                    label: "Returned",
-                    data: [],
-                    borderColor: window.theme.success,
-                    backgroundColor: "transparent",
-                    fill: false,
-                    tension: 0.2
-                }]
-            },
-            options: { 
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        min: 0,
-                        ticks: {
-                            stepSize: 1,
-
-                        }
-                    }
+        // --- GRÁFICO DE DONA ---
+        const doughnutDataElement = document.getElementById('doughnut-chart-data');
+        if (doughnutDataElement) {
+            const doughnutDataRaw = JSON.parse(doughnutDataElement.textContent);
+            const doughnutLabels = doughnutDataRaw.map(item => item.support_channel__name);
+            const doughnutData = doughnutDataRaw.map(item => item.count);
+            
+            doughnutChart = new Chart(document.getElementById("supportChannelChart"), {
+                type: "doughnut",
+                data: {
+                    labels: doughnutLabels,
+                    datasets: [{
+                        data: doughnutData,
+                        backgroundColor: ['#4e73df', '#f6c23e', '#e74a3b', '#1cc88a', '#36b9cc', '#6f42c1','#e0e0e0','#ff9f40'],
+                        borderWidth: 2,
+                        borderColor: "#fff"
+                    }]
                 },
-                plugins: {
-                    legend: {
-                        display: true
-                    }
+                options: { responsive: true, maintainAspectRatio: false, cutout: "75%", plugins: { legend: { display: false } } }
+            });
+        }
+
+        // --- GRÁFICO DE LÍNEAS DINÁMICO ---
+        const lineChartCanvas = document.getElementById("callsLineChart");
+        if (lineChartCanvas) {
+            const chartTitle = document.getElementById("calls-chart-title");
+            const dateNavWrapper = document.getElementById("date-nav-wrapper");
+            let currentDate = new Date();
+            let currentPeriod = 'month';
+
+            lineChart = new Chart(lineChartCanvas, {
+                type: "line",
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: "Received", data: [], borderColor: window.theme.primary, backgroundColor: "transparent", fill: false, tension: 0.2 },
+                        { label: "Missed", data: [], borderColor: window.theme.danger, backgroundColor: "transparent", fill: false, borderDash: [5, 5], tension: 0.2 },
+                        { label: "Returned", data: [], borderColor: window.theme.success, backgroundColor: "transparent", fill: false, tension: 0.2 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, min: 0, ticks: { stepSize: 1, callback: function(value) { if (Number.isInteger(value)) { return value; } } } } }, plugins: { legend: { display: true } } }
+            });
+            
+            function updateChartTitle() {
+                let title = "Calls Status";
+                const monthName = currentDate.toLocaleString('en-US', { month: 'long' });
+                const year = currentDate.getFullYear();
+                if (currentPeriod === 'year') {
+                    title = `Calls Status - ${year}`;
+                } else if (currentPeriod === 'month') {
+                    title = `Calls Status - ${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`;
+                } else if (currentPeriod === 'day') {
+                    title = `Calls Status - ${currentDate.toLocaleDateString('en-US')}`;
                 }
+                chartTitle.textContent = title;
             }
-        });
-        const chartTitle = document.getElementById("calls-chart-title");
-        const dateNavWrapper = document.getElementById("date-nav-wrapper");
 
-        let currentDate = new Date();
-        let currentPeriod = 'month';
-
-
-
-        // Función para formatear el título del gráfico
-        function updateChartTitle() {
-            let title = "Calls Status";
-            const monthName = currentDate.toLocaleString('en-US', { month: 'long' });
-            const year = currentDate.getFullYear();
-            if (currentPeriod === 'year') {
-                title = `Calls Status - ${year}`;
-            } else if (currentPeriod === 'month') {
-                title = `Calls Status - ${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`;
-            } else if (currentPeriod === 'day') {
-                title = `Calls Status - ${currentDate.toLocaleDateString('es-ES')}`;
+            async function fetchAndUpdateChart() {
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth() + 1;
+                const day = currentDate.getDate();
+                const url = `{% url 'core:call_stats_chart' %}?period=${currentPeriod}&year=${year}&month=${month}&day=${day}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                lineChart.data.labels = data.labels;
+                lineChart.data.datasets[0].data = data.received;
+                lineChart.data.datasets[1].data = data.missed;
+                lineChart.data.datasets[2].data = data.returned;
+                lineChart.update();
+                updateChartTitle();
             }
-            chartTitle.textContent = title;
-        }
 
-        // 2. Función para pedir datos a Django y actualizar el gráfico
-        async function fetchAndUpdateChart() {
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth() + 1;
-            const day = currentDate.getDate();
+            document.querySelectorAll("#chart-period-filter button").forEach(button => {
+                button.addEventListener("click", function () {
+                    document.querySelectorAll("#chart-period-filter button").forEach(btn => btn.classList.remove("active"));
+                    this.classList.add("active");
+                    currentPeriod = this.dataset.period;
+                    dateNavWrapper.style.display = (currentPeriod === 'year') ? 'none' : 'inline-block';
+                    fetchAndUpdateChart();
+                });
+            });
 
-            const url = `{% url 'core:call_stats_chart' %}?period=${currentPeriod}&year=${year}&month=${month}&day=${day}`;
-            const response = await fetch(url);
-            const data = await response.json();
-
-            lineChart.data.labels = data.labels;
-            lineChart.data.datasets[0].data = data.received;
-            lineChart.data.datasets[1].data = data.missed;
-            lineChart.data.datasets[2].data = data.returned;
-            lineChart.update();
-            updateChartTitle();
-        }
-
-        // 3. Lógica para los botones de filtro
-        document.querySelectorAll("#chart-period-filter button").forEach(button => {
-            button.addEventListener("click", function () {
-                document.querySelectorAll("#chart-period-filter button").forEach(btn => btn.classList.remove("active"));
-                this.classList.add("active");
-                currentPeriod = this.dataset.period;
-                dateNavWrapper.style.display = (currentPeriod === 'year') ? 'none' : 'inline-block';
+            document.getElementById("prev-btn").addEventListener("click", function () {
+                if (currentPeriod === 'month') currentDate.setMonth(currentDate.getMonth() - 1);
+                else if (currentPeriod === 'day') currentDate.setDate(currentDate.getDate() - 1);
                 fetchAndUpdateChart();
             });
-        });
-        // Lógica para botones de navegación de mes
-        document.getElementById("prev-btn").addEventListener("click", function () {
-            if (currentPeriod === 'month') currentDate.setMonth(currentDate.getMonth() - 1);
-            else if (currentPeriod === 'day') currentDate.setDate(currentDate.getDate() - 1);
+
+            document.getElementById("next-btn").addEventListener("click", function () {
+                if (currentPeriod === 'month') currentDate.setMonth(currentDate.getMonth() + 1);
+                else if (currentPeriod === 'day') currentDate.setDate(currentDate.getDate() + 1);
+                fetchAndUpdateChart();
+            });
+            
+            dateNavWrapper.style.display = 'inline-block';
             fetchAndUpdateChart();
-        });
+        }
 
-        document.getElementById("next-btn").addEventListener("click", function () {
-            if (currentPeriod === 'month') currentDate.setMonth(currentDate.getMonth() + 1);
-            else if (currentPeriod === 'day') currentDate.setDate(currentDate.getDate() + 1);
-            fetchAndUpdateChart();
-        });
-
-        // Carga inicial
-        dateNavWrapper.style.display = 'inline-block'; // Mostrar flechas al inicio (vista mensual)
-        fetchAndUpdateChart();
-
-
+        // --- GRÁFICO DE BARRAS HORIZONTAL ---
         const barChartDataElement = document.getElementById('bar-chart-data');
         if (barChartDataElement) {
-            const barChartData = JSON.parse(barChartDataElement.textContent);
+            const barChartDataRaw = JSON.parse(barChartDataElement.textContent);
+            const barLabels = barChartDataRaw.map(item => item.client__country__name);
+            const barData = barChartDataRaw.map(item => item.count);
             
-            // Invertimos los datos para que el más alto aparezca arriba
-            const barLabels = barChartData.map(item => item.client__country__name);
-            const barData = barChartData.map(item => item.count)
-
-            new Chart(document.getElementById("countryBarChart"), {
-                type: "horizontalBar", 
+            barChart = new Chart(document.getElementById("countryBarChart"), {
+                type: "horizontalBar",
                 data: {
                     labels: barLabels,
                     datasets: [{
@@ -361,32 +359,76 @@
                         borderColor: window.theme.primary
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        xAxes: [{
-                            ticks: {
-                                beginAtZero: true,
-                                stepSize: 1
-                            }
-                        }]
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
+                options: { responsive: true, maintainAspectRatio: false, scales: { xAxes: [{ ticks: { beginAtZero: true, stepSize: 1 } }] }, plugins: { legend: { display: false } } }
+            });
+        }
+
+        // --- LÓGICA DE WEBSOCKET PARA ACTUALIZACIONES EN TIEMPO REAL ---
+        const dashboardSocket = new WebSocket(
+            'ws://' + window.location.host + '/ws/dashboard/'
+        );
+
+        dashboardSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data).data;
+            console.log("Nuevos datos recibidos vía WebSocket:", data);
+
+            // 1. Actualizar tarjetas de estadísticas
+            document.getElementById('total-tickets-value').textContent = data.total_tickets;
+            document.getElementById('tickets-today-value').textContent = data.tickets_today;
+            document.getElementById('total-clients-value').textContent = data.total_clients;
+            document.getElementById('missed-calls-today-value').textContent = data.missed_calls_today;
+            // document.getElementById('avg-wait-time-value').textContent = data.avg_wait_time;
+            
+            const avgWaiTimeEl = document.getElementById('avg-wait-time-value');
+            if (avgWaiTimeEl && data.avg_wait_time) {
+                avgWaiTimeEl.textContent = data.avg_wait_time;
+            }
+            
+            const remainingCreditEl = document.getElementById('remaining-credit-value');
+            if (remainingCreditEl) {
+                remainingCreditEl.innerHTML = `${Math.round(data.remaining_credit)} <span class="fs-5 text-muted">min</span>`;
+                if (data.remaining_credit <= 10) {
+                    remainingCreditEl.classList.add('text-danger');
+                } else {
+                    remainingCreditEl.classList.remove('text-danger');
                 }
+            }
+            const consumedMinutesEl = document.getElementById('consumed-minutes-value');
+            if(consumedMinutesEl) {
+                consumedMinutesEl.textContent = `Consumed: ${Math.round(data.consumed_minutes)}/3000 min`;
+            }
+
+            // 2. Actualizar gráfico de dona
+            if (doughnutChart && data.channel_stats) {
+                doughnutChart.data.labels = data.channel_stats.map(item => item.support_channel__name);
+                doughnutChart.data.datasets[0].data = data.channel_stats.map(item => item.count);
+                doughnutChart.update();
+            }
+
+            // 3. Actualizar gráfico de barras
+            if (barChart && data.country_stats) {
+                barChart.data.labels = data.country_stats.map(item => item.client__country__name);
+                barChart.data.datasets[0].data = data.country_stats.map(item => item.count);
+                barChart.update();
+            }
+
+            // 4. Actualizar gráfico de líneas
+            if (lineChart) {
+                fetchAndUpdateChart();
+            }
+        };
+
+        dashboardSocket.onclose = function(e) {
+            console.error('Dashboard socket closed unexpectedly');
+        };
+
+        // --- LÓGICA DEL MODAL DE RECARGA ---
+        const confirmRechargeBtn = document.getElementById('confirm-recharge-btn');
+        if(confirmRechargeBtn) {
+            confirmRechargeBtn.addEventListener('click', function() {
+                document.getElementById('recharge-form').submit();
             });
         }
     });
-
-
-    $('#confirm-recharge-btn').on('click', function() {
-        // Busca el formulario por su ID y lo envía
-        $('#recharge-form').submit();
-    });
-
 </script>
 {% endblock %}
