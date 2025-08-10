@@ -31,3 +31,5 @@ def render_to_pdf(template_src: str, context: dict, filename: str = "report.pdf"
         return response
 
     return HttpResponse(html)
+
+

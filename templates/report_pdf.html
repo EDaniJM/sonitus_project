@@ -1,4 +1,5 @@
 {% load static %}
+{% load report_pdf_extras %}
 <!doctype html>
 <html>
 
@@ -213,8 +214,8 @@
             <tr>
                 <td>{{ s.support_channel.name }}</td>
                 <td>
-                    {% if s.kerberus_id %}Kerberus: {{ s.kerberus_id }}<br>{% endif %}
-                    {% if s.freshdesk_ticket %}Freshdesk: {{ s.freshdesk_ticket }}{% endif %}
+                    {% if s.kerberus_id %}Kerberus: {{ s.kerberus_id|chunk_spaced:6 }}<br>{% endif %}
+                    {% if s.freshdesk_ticket %}Freshdesk: {{ s.freshdesk_ticket|chunk_spaced:6 }}{% endif %}
                 </td>
                 <td>{{ s.duration_str }}</td>
                 <td>{{ s.client.name }} {{ s.client.lastname }}</td>
