@@ -29,7 +29,7 @@ services:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
     ports:
-      - "80:80"
+      - "8001:80"
     networks:
       - frontend
       - backend
