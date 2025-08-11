@@ -40,6 +40,8 @@
                             {{ support_form.support_channel }}
                         </div>
                     </div>
+
+                    
                     <div class="mb-3">
                         <label for="{{ support_form.problem_description.id_for_label }}" class="form-label">
                             Problem description <span class="text-danger">*</span>
@@ -93,6 +95,21 @@
                             </div>
                             {% endif %}
                         </div>
+
+                        <div class="col-md-6 mb-3" id="training-dates-wrapper">
+                            <label for="{{ support_form.training_date_range.id_for_label }}" class="form-label">
+                                Training Dates <span class="text-danger">*</span>
+                            </label>
+                            {{ support_form.training_date_range }}
+
+                            {% if support_form.training_date_range.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ support_form.training_date_range.errors|striptags }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+
                     </div>
 
                     <hr>
@@ -319,6 +336,11 @@
             defaultDate: "00:00:00"
         });
 
+        flatpickr("#{{ support_form.training_date_range.auto_id }}", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+        });
+
         // 1. Obtenemos los datos que la vista nos envió
         const channelCallData = JSON.parse('{{ channel_call_data_json|safe }}');
 
@@ -329,6 +351,8 @@
         const callStatusField = document.getElementById('call-status-wrapper');
         const waitingTimeField = document.getElementById('waiting-time-wrapper');
         const durationField = document.getElementById('duration-wrapper');
+
+        const trainingDatesField = document.getElementById('training-dates-wrapper');
 
         function toggleAllConditionalFields() {
             const selectedChannelId = supportChannelSelect.value;
@@ -341,8 +365,11 @@
             waitingTimeField.classList.add('d-none');
             durationField.classList.add('d-none');
 
-            if (selectedChannelText.includes('Training Presential')) {
+            trainingDatesField.classList.add('d-none');
+
+            if (selectedChannelText.includes('Presential Training')) {
                 durationField.classList.remove('d-none'); // Solo muestra Duración
+                trainingDatesField.classList.remove('d-none'); // Muestra el campo de fechas de entrenamiento
             }
             else if (isCall) {
                 // Si es una llamada, muestra los campos de llamada

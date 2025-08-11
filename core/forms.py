@@ -1,4 +1,5 @@
 # core/forms.py
+from datetime import datetime
 from django import forms
 from .models import Support, Client, CreditBalance, Company
 from django.core.exceptions import ValidationError
@@ -16,6 +17,11 @@ class SupportForm(forms.ModelForm):
     client = ClientChoiceField(
         queryset=Client.objects.all(),
         widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    training_date_range = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Select date range'})
     )
 
     duration = forms.DurationField(
@@ -44,7 +50,8 @@ class SupportForm(forms.ModelForm):
             'kerberus_id',
             'freshdesk_ticket',
             'waiting_time',
-            'duration'
+            'duration',
+            'training_date_range',
         ]
         widgets = {
             'support_channel': forms.Select(attrs={'class': 'form-select'}),
@@ -58,7 +65,7 @@ class SupportForm(forms.ModelForm):
     def _parse_duration(self, value):
         try:
             h, m, s = map(int, value.split(":"))
-            return timedelta(hours=h, minutes=m, seconds=s)
+            return datetime.timedelta(hours=h, minutes=m, seconds=s)
         except:
             return None
 
@@ -66,6 +73,19 @@ class SupportForm(forms.ModelForm):
         cleaned_data = super().clean()
 
         support_channel = cleaned_data.get("support_channel")
+        date_range = cleaned_data.get('training_date_range')
+
+        if support_channel and 'Presential Training' in support_channel.name:
+            if date_range:
+                try:
+                    start_str, end_str = date_range.split(' to ')
+                    cleaned_data['training_start_date'] = datetime.strptime(start_str, '%Y-%m-%d').date()
+                    cleaned_data['training_end_date'] = datetime.strptime(end_str, '%Y-%m-%d').date()
+                except (ValueError, TypeError):
+                    self.add_error('training_date_range', 'Formato de rango de fechas inválido. Use "YYYY-MM-DD to YYYY-MM-DD".')
+            else:
+                self.add_error('training_date_range', 'El rango de fechas es obligatorio para capacitaciones presenciales.')
+
         call_status = cleaned_data.get("call_status")
         duration = cleaned_data.get("duration")
         waiting_time = cleaned_data.get("waiting_time")
@@ -112,6 +132,22 @@ class SupportForm(forms.ModelForm):
                     "There are not enough credits available to register this support.")
 
         return cleaned_data
+    
+    def save(self, commit=True):
+        # 1. Obtiene la instancia del modelo sin guardarla en la base de datos todavía.
+        instance = super().save(commit=False)
+
+        # 2. Asigna manualmente los valores desde cleaned_data a la instancia del modelo.
+        #    Usamos .get() por seguridad, aunque la lógica en clean() asegura que existen.
+        instance.training_start_date = self.cleaned_data.get('training_start_date')
+        instance.training_end_date = self.cleaned_data.get('training_end_date')
+
+        # 3. Si commit es True, ahora sí guarda la instancia completa en la base de datos.
+        if commit:
+            instance.save()
+        
+        return instance
+
 
 
 class CompanyForm(forms.ModelForm):

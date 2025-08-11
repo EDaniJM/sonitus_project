@@ -119,6 +119,9 @@ class Support(models.Model):
     # Tiempos (usando DurationField)
     waiting_time = models.DurationField(null=True, blank=True)
     duration = models.DurationField(null=True, blank=True)
+    
+    training_start_date = models.DateField(null=True, blank=True)
+    training_end_date = models.DateField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
         
