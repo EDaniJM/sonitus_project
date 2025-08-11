@@ -82,9 +82,9 @@ class SupportForm(forms.ModelForm):
                     cleaned_data['training_start_date'] = datetime.strptime(start_str, '%Y-%m-%d').date()
                     cleaned_data['training_end_date'] = datetime.strptime(end_str, '%Y-%m-%d').date()
                 except (ValueError, TypeError):
-                    self.add_error('training_date_range', 'Formato de rango de fechas inválido. Use "YYYY-MM-DD to YYYY-MM-DD".')
+                    self.add_error('training_date_range', 'Invalid format. Use "YYYY-MM-DD to YYYY-MM-DD".')
             else:
-                self.add_error('training_date_range', 'El rango de fechas es obligatorio para capacitaciones presenciales.')
+                self.add_error('training_date_range', 'The date range is required.')
 
         call_status = cleaned_data.get("call_status")
         duration = cleaned_data.get("duration")
