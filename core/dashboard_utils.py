@@ -20,28 +20,41 @@ def get_dashboard_data():
         call_status__name='MISSED'
     ).count()
 
-    # Promedio de tiempo de espera para llamadas recibidas hoy
-    avg_wait_time_str = "00:00"
-    filtered_calls = Support.objects.filter(
-        created_at__date=today,
-        call_status__name__in=['RECEIVED', 'MISSED', 'RETURNED'],
-        waiting_time__isnull=False,  # Excluye filas donde waiting_time es NULL
-    ).exclude(
-        waiting_time=timedelta(seconds=0) # Excluye filas donde waiting_time es 00:00:00
-    )
+    # # Promedio de tiempo de espera para llamadas recibidas hoy
+    # avg_wait_time_str = "00:00"
+    # filtered_calls = Support.objects.filter(
+    #     created_at__date=today,
+    #     call_status__name__in=['RECEIVED', 'MISSED', 'RETURNED'],
+    #     waiting_time__isnull=False,  # Excluye filas donde waiting_time es NULL
+    # ).exclude(
+    #     waiting_time=timedelta(seconds=0) # Excluye filas donde waiting_time es 00:00:00
+    # )
 
 
-    # Calcula el promedio del tiempo de espera para las llamadas filtradas
-    if filtered_calls.exists():
-        avg_wait_time_result = filtered_calls.aggregate(avg_wait=Avg('waiting_time'))
-        avg_wait_time_delta = avg_wait_time_result.get('avg_wait')
+    # # Calcula el promedio del tiempo de espera para las llamadas filtradas
+    # if filtered_calls.exists():
+    #     avg_wait_time_result = filtered_calls.aggregate(avg_wait=Avg('waiting_time'))
+    #     avg_wait_time_delta = avg_wait_time_result.get('avg_wait')
         
-        if avg_wait_time_delta:
-            total_seconds = int(avg_wait_time_delta.total_seconds())
-            hours = total_seconds // 3600
-            minutes = (total_seconds % 3600) // 60
-            seconds = total_seconds % 60
-            avg_wait_time_str = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+    #     if avg_wait_time_delta:
+    #         total_seconds = int(avg_wait_time_delta.total_seconds())
+    #         hours = total_seconds // 3600
+    #         minutes = (total_seconds % 3600) // 60
+    #         seconds = total_seconds % 60
+    #         avg_wait_time_str = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+    total_wait_time_result = Support.objects.filter(
+        created_at__date=today,
+        support_channel__is_call=True  # Consideramos todas las llamadas
+    ).aggregate(total_wait=Sum('waiting_time'))
+    
+    total_wait_time_delta = total_wait_time_result.get('total_wait') or timedelta(0)
+    
+    # Formateamos el resultado a HH:MM:SS
+    total_seconds = int(total_wait_time_delta.total_seconds())
+    hours, remainder = divmod(total_seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    total_wait_time_str = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
     # Lógica de créditos
     # total_credit_minutes = 3000
@@ -75,7 +88,7 @@ def get_dashboard_data():
         'total_clients': total_clients,
         'tickets_today': tickets_today,
         'missed_calls_today': missed_calls_today,
-        'avg_wait_time': avg_wait_time_str,
+        'total_wait_time': total_wait_time_str,
         'remaining_credit': remaining_credit,
         'consumed_minutes': consumed_minutes,
         'channel_stats': channel_stats,

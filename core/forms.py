@@ -78,13 +78,25 @@ class SupportForm(forms.ModelForm):
         if support_channel and 'Presential Training' in support_channel.name:
             if date_range:
                 try:
-                    start_str, end_str = date_range.split(' to ')
-                    cleaned_data['training_start_date'] = datetime.strptime(start_str, '%Y-%m-%d').date()
-                    cleaned_data['training_end_date'] = datetime.strptime(end_str, '%Y-%m-%d').date()
+                    # --- INICIO DE LA LÓGICA MEJORADA ---
+                    # Verificamos si es un rango o una fecha única
+                    if ' to ' in date_range:
+                        start_str, end_str = date_range.split(' to ')
+                    else:
+                        # Si no hay ' to ', es una fecha única. El inicio y el fin son el mismo día.
+                        start_str = date_range
+                        end_str = date_range
+                    
+                    # Ahora procesamos las fechas
+                    cleaned_data['training_start_date'] = datetime.strptime(start_str.strip(), '%Y-%m-%d').date()
+                    cleaned_data['training_end_date'] = datetime.strptime(end_str.strip(), '%Y-%m-%d').date()
+                    # --- FIN DE LA LÓGICA MEJORADA ---
+
                 except (ValueError, TypeError):
-                    self.add_error('training_date_range', 'Invalid format. Use "YYYY-MM-DD to YYYY-MM-DD".')
+                    # Actualizamos el mensaje de error para que sea más claro
+                    self.add_error('training_date_range', 'Invalid format. Use "YYYY-MM-DD" or "YYYY-MM-DD to YYYY-MM-DD".')
             else:
-                self.add_error('training_date_range', 'The date range is required.')
+                self.add_error('training_date_range', 'Training dates are required.')
 
         call_status = cleaned_data.get("call_status")
         duration = cleaned_data.get("duration")
@@ -118,7 +130,15 @@ class SupportForm(forms.ModelForm):
                 self.add_error(
                     'waiting_time', "Waiting time is required for missed calls.")
 
-        # Regla 3: Canal FreshDesk => ticket obligatorio
+        # Regla 3:      
+        if call_status and getattr(call_status, 'name', None) == 'MISSED':
+            if duration and duration.total_seconds() > 0:
+                self.add_error(
+                    'duration', 
+                    "La llamada no puede tener duración, ya que es una llamada perdida."
+                )
+
+        # Regla 4: Canal FreshDesk => ticket obligatorio
         if 'FreshDesk' in getattr(support_channel, 'name', '') and not freshdesk_ticket:
             self.add_error('freshdesk_ticket',
                            "FreshDesk Ticket ID is required for this channel.")

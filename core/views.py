@@ -81,7 +81,7 @@ def dashboard_view(request):
         'consumed_minutes': initial_data.get('consumed_minutes'),
         'country_stats': initial_data.get('country_stats'),
         'missed_calls_today' : initial_data.get('missed_calls_today'),
-        'avg_wait_time' : initial_data.get('avg_wait_time'),
+        'total_wait_time': initial_data.get('total_wait_time'),
     }
     return render(request, 'dashboard.html', context)
 
@@ -370,6 +370,8 @@ def download_report_pdf(request):
         .filter(created_at__gte=start_dt, created_at__lt=end_dt)
         .select_related('client__company', 'support_channel', 'client__country')
         .order_by('created_at'))
+    
+    missed_calls_count = qs.filter(call_status__name='MISSED').count()
 
     for s in qs:
         if s.duration:
@@ -464,5 +466,6 @@ def download_report_pdf(request):
         "doughnut_chart_base64": doughnut_chart_base64, 
         "bar_chart_base64": bar_chart_base64,         
         "channel_stats": channel_stats,
+        "missed_calls_count": missed_calls_count,
     }
     return render_to_pdf("report_pdf.html", context, filename)

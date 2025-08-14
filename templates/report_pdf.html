@@ -1,5 +1,6 @@
 {% load static %}
 {% load report_extras %}
+{% load core_extras %}
 <!doctype html>
 <html>
 
@@ -83,6 +84,8 @@
             vertical-align: top;
             /* Propiedad clave para forzar el ajuste de texto en xhtml2pdf */
             word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-all; 
         }
 
         .report-table thead th {
@@ -119,6 +122,61 @@
 
         .col-solution {
             width: 20%;
+        }
+
+        /* --- KPI CARD (compatible con xhtml2pdf) --- */
+        .kpi-row {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0 10px;
+        }
+
+        .kpi-cell {
+            width: 25%;
+            vertical-align: top;
+            padding: 0;
+        }
+
+        .kpi-box {
+            border: 1px solid #e3e6f0;
+            background-color: #ffffff;
+            padding: 10px 12px;
+        }
+
+        /* Encabezado de la card como una tabla: título a la izquierda, icono derecha */
+        .kpi-head {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .kpi-head td {
+            padding: 0;
+        }
+
+        .kpi-title {
+            font-size: 12px;
+            color: #6c757d;
+            font-weight: bold;
+            margin: 0 0 6px 0;
+        }
+
+        .kpi-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #000000;
+            margin: 4px 0 0 0;
+        }
+
+        .kpi-icon {
+            text-align: right;
+            width: 28px;
+            /* fija el ancho de la celda del icono */
+        }
+
+        .kpi-icon img {
+            width: 24px;
+            height: 24px;
+            display: inline-block;
         }
     </style>
 </head>
@@ -182,12 +240,57 @@
         </tr>
 
         <!-- Fila 2: Bar Chart centrado -->
-        <tr>
-            
+        <!-- <tr>
+
             <td colspan="2" style="padding-top: 20px;">
                 <h3>Summary by Country</h3>
                 <img src="data:image/png;base64,{{ bar_chart_base64 }}"
-                    style="width: 550px; height: 250px; display: block; margin: auto;">
+                    style="width: 450px; height: 250px; display: block; margin: auto;">
+            </td>
+        </tr> -->
+        <tr>
+            <!-- Bar Chart -->
+            <td style="width: 70%; text-align: left; vertical-align: top;">
+                <br>
+                <h3>Summary by Country</h3>
+                <img src="data:image/png;base64,{{ bar_chart_base64 }}"
+                    style="width: 420px; height: 250px; display: block; margin: auto;">
+            </td>
+
+            <!-- Card Missed Calls -->
+            <td style="width: 30%; vertical-align: middle; text-align: left;">
+                <h3>Total missed calls</h3>
+                <table
+                    style="width: 150px; border-collapse: collapse; font-size: 12px; margin: auto; border: 1px solid #ddd; border-radius: 10px;">
+                    <tr>
+                        <td style="border:1px solid #e5e7eb; padding:0;">
+                            <!-- CARD -->
+                            <table cellspacing="0" cellpadding="0"
+                                style="width:100%; border:0; border-collapse:separate;">
+                                <!-- Encabezado -->
+                                <tr>
+                                    <td
+                                        style="background:#f2f4f7; padding:8px; color:#6b7280; font-weight:bold; font-size:11px;">
+                                        Missed Calls
+                                    </td>
+                                    <td
+                                        style="background:#f2f4f7; width:36px; text-align:center; padding:6px 6px 6px 0;">
+                                        <img src="{% static 'img/icon_alert_circle.png' %}" alt="!"
+                                            style="width:24px; height:24px; display:block; margin:0 auto;">
+                                    </td>
+                                </tr>
+                                <!-- Valor -->
+                                <tr>
+                                    <td colspan="2" style="padding:10px 8px; text-align:left;">
+                                        <span style="font-size:18px; font-weight:700; color:#111827;">
+                                            {{ missed_calls_count }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
             </td>
         </tr>
     </table>
@@ -214,14 +317,14 @@
             <tr>
                 <td>{{ s.support_channel.name }}</td>
                 <td>
-                    {% if s.kerberus_id %}Kerberus: {{ s.kerberus_id|chunk_spaced:6 }}<br>{% endif %}
-                    {% if s.freshdesk_ticket %}Freshdesk: {{ s.freshdesk_ticket|chunk_spaced:6 }}{% endif %}
+                    {% if s.kerberus_id %}Kerberus: {{ s.kerberus_id|chunk_spaced:10 }}<br>{% endif %}
+                    {% if s.freshdesk_ticket %}Freshdesk: {{ s.freshdesk_ticket|chunk_spaced:10 }}{% endif %}
                 </td>
                 <td>{{ s.duration_str }}</td>
-                <td>{{ s.client.name }} {{ s.client.lastname }}</td>
-                <td>{% if s.client.company %}{{ s.client.company.name }}{% endif %}</td>
-                <td>{{ s.problem_description }}</td>
-                <td>{{ s.solution_description }}</td>
+                <td>{{ s.client.name|force_wrap:20 }} {{ s.client.lastname|force_wrap:20 }}</td>
+                <td>{% if s.client.company %}{{ s.client.company.name|force_wrap:20 }}{% else %}N/A{% endif %}</td>
+                <td>{{ s.problem_description|force_wrap:20 }}</td>
+                <td>{{ s.solution_description|force_wrap:20 }}</td>
             </tr>
             {% empty %}
             <tr>

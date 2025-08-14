@@ -41,7 +41,7 @@
                         </div>
                     </div>
 
-                    
+
                     <div class="mb-3">
                         <label for="{{ support_form.problem_description.id_for_label }}" class="form-label">
                             Problem description <span class="text-danger">*</span>
@@ -103,9 +103,9 @@
                             {{ support_form.training_date_range }}
 
                             {% if support_form.training_date_range.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ support_form.training_date_range.errors|striptags }}
-                                </div>
+                            <div class="invalid-feedback d-block">
+                                {{ support_form.training_date_range.errors|striptags }}
+                            </div>
                             {% endif %}
                         </div>
 
@@ -363,7 +363,7 @@
             freshdeskField.classList.add('d-none');
             callStatusField.classList.add('d-none');
             waitingTimeField.classList.add('d-none');
-            durationField.classList.add('d-none');
+            //durationField.classList.add('d-none');
 
             trainingDatesField.classList.add('d-none');
 
@@ -380,18 +380,55 @@
                 // Lógica específica para el ID
                 if (selectedChannelText.includes('Kerberus') || selectedChannelText.includes('Call Center')) {
                     kerberusField.classList.remove('d-none');
+                    durationField.classList.remove('d-none');
                 }
             }
             else { // Lógica para otros canales que no son llamada
                 if (selectedChannelText.includes('FreshDesk')) {
                     freshdeskField.classList.remove('d-none');
+                    durationField.classList.remove('d-none');
                 }
             }
         }
 
+        const callStatusSelect = document.getElementById('{{ support_form.call_status.auto_id }}');
+        const durationInput = document.querySelector('#duration-wrapper input.duration-picker');
+        const durationPicker = durationInput._flatpickr; // Accedemos a la instancia de flatpickr
+
+        // 4. Creamos una función específica para manejar el estado de la llamada
+        function handleCallStatusChange() {
+            if (!callStatusSelect || !callStatusSelect.options[callStatusSelect.selectedIndex]) return;
+            const selectedStatusText = callStatusSelect.options[callStatusSelect.selectedIndex].text;
+
+            if (selectedStatusText.includes('MISSED')) {
+                // 1. Bloquea la escritura directa en el input
+                durationInput.readOnly = true;
+                durationInput.style.backgroundColor = '#e9ecef';
+
+                if (durationPicker) {
+                    // 2. Le dice a Flatpickr que no se abra al hacer clic
+                    durationPicker.set('clickOpens', false);
+
+                    // 3. Establece el valor por defecto
+                    durationPicker.setDate("00:00:00");
+                }
+            } else {
+                // 1. Permite la escritura de nuevo
+                durationInput.readOnly = false;
+                durationInput.style.backgroundColor = '#fff';
+
+                if (durationPicker) {
+                    // 2. Le dice a Flatpickr que SÍ se abra al hacer clic
+                    durationPicker.set('clickOpens', true);
+                }
+            }
+        }
         // Ejecutamos la función al cargar y al cambiar
         toggleAllConditionalFields();
         supportChannelSelect.addEventListener('change', toggleAllConditionalFields);
+
+        handleCallStatusChange(); // Ejecuta la nueva función al cargar la página
+        callStatusSelect.addEventListener('change', handleCallStatusChange); // Y cuando cambie el estado de la llamada
 
         // --- LÓGICA PARA INTERCAMBIAR VISTAS EN EL MODAL ---
         const modalTitle = document.getElementById('addClientModalLabel');
